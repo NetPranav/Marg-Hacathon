@@ -1,0 +1,1 @@
+import{j as t,B as s,T as n}from"./index-DqRQi7qR.js";function o(){return t.jsxs(s,{sx:{p:3},children:[t.jsx(n,{variant:"h5",sx:{fontWeight:800,mb:2},children:"Notifications Center"}),t.jsx(n,{color:"text.secondary",children:"All system alerts, chat notifications, and SLA warnings (Under Construction)."})]})}export{o as default};

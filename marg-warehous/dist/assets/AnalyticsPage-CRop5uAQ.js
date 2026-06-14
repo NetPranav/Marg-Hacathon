@@ -1,0 +1,1 @@
+import{j as t,B as s,T as r}from"./index-DqRQi7qR.js";function a(){return t.jsxs(s,{sx:{p:3},children:[t.jsx(r,{variant:"h5",sx:{fontWeight:800,mb:2},children:"Warehouse Analytics"}),t.jsx(r,{color:"text.secondary",children:"Historical performance, throughput, and bottleneck analysis (Under Construction)."})]})}export{a as default};

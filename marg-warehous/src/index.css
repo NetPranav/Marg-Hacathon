@@ -1,0 +1,192 @@
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── CSS Custom Properties (Design Tokens) ────────────────────── */
+:root {
+  --orange-500: #E8700A;
+  --orange-600: #CC5F00;
+  --orange-400: #F59E0B;
+  --brown-700: #8B3A0E;
+  --brown-800: #6D2D09;
+  --brown-900: #5A2307;
+  --navy-900: #0F172A;
+  --navy-800: #1E293B;
+  --navy-700: #334155;
+  --slate-500: #64748B;
+  --slate-400: #94A3B8;
+  --slate-300: #CBD5E1;
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --glass-dark-bg: rgba(15, 23, 42, 0.75);
+  --glass-dark-border: rgba(255, 255, 255, 0.08);
+  --card-radius: 20px;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Scrollbar — Light Theme ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 58, 14, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 58, 14, 0.3); }
+
+/* ─── Scrollbar — Dark containers ──────────────────────────────── */
+.dark-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+.dark-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* ─── Keyframe Animations ──────────────────────────────────────── */
+
+/* Radar sweep for inbound yard */
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Radar pulse ring */
+@keyframes radarPulse {
+  0% { transform: scale(0.3); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* Truck blip blink */
+@keyframes truckBlip {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* SLA Countdown flash for critical trucks */
+@keyframes slaFlash {
+  0%, 100% { background-color: rgba(239, 68, 68, 0.05); }
+  50% { background-color: rgba(239, 68, 68, 0.18); }
+}
+
+/* Subtle card float/breathe */
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Gantt block slide */
+@keyframes ganttSlide {
+  from { transform: translateX(-8px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Pulse glow for active elements */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 112, 10, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(232, 112, 10, 0); }
+}
+
+/* Fade in stagger for list items */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Count down tick */
+@keyframes countdownTick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Spin for loading */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Utility Classes ──────────────────────────────────────────── */
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--glass-shadow);
+  transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+  box-shadow: 0 12px 40px rgba(139, 58, 14, 0.08);
+  transform: translateY(-1px);
+}
+
+.glass-card-dark {
+  background: var(--glass-dark-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-dark-border);
+  border-radius: var(--card-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: var(--transition-smooth);
+}
+
+.glass-card-dark:hover {
+  border-color: rgba(232, 112, 10, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-sla-flash {
+  animation: slaFlash 1.2s ease-in-out infinite;
+}
+
+.animate-radar-sweep {
+  animation: radarSweep 4s linear infinite;
+}
+
+.animate-blip {
+  animation: truckBlip 1.5s ease-in-out infinite;
+}
+
+/* ─── Typography Utilities ─────────────────────────────────────── */
+
+.text-gradient-orange {
+  background: linear-gradient(135deg, #E8700A 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-brown {
+  background: linear-gradient(135deg, #8B3A0E 0%, #E8700A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Background Patterns ──────────────────────────────────────── */
+
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(139, 58, 14, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 58, 14, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(139, 58, 14, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

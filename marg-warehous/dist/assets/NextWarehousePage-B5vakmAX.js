@@ -1,0 +1,1 @@
+import{j as e,B as r,T as o}from"./index-DqRQi7qR.js";function s(){return e.jsxs(r,{sx:{p:3},children:[e.jsx(o,{variant:"h5",sx:{fontWeight:800,mb:2},children:"Next Warehouse Coordination"}),e.jsx(o,{color:"text.secondary",children:"Coordinate arrival windows and capacities with downstream warehouse nodes (Under Construction)."})]})}export{s as default};

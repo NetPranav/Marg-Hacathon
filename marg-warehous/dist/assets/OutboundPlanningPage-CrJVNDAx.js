@@ -1,0 +1,1 @@
+import{j as n,B as t,T as o}from"./index-DqRQi7qR.js";function i(){return n.jsxs(t,{sx:{p:3},children:[n.jsx(o,{variant:"h5",sx:{fontWeight:800,mb:2},children:"Outbound Planning"}),n.jsx(o,{color:"text.secondary",children:"Optimize truck routes and load distribution for outbound forwarding (Under Construction)."})]})}export{i as default};

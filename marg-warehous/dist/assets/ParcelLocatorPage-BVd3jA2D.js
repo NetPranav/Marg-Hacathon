@@ -1,0 +1,1 @@
+import{j as r,B as o,T as e}from"./index-DqRQi7qR.js";function s(){return r.jsxs(o,{sx:{p:3},children:[r.jsx(e,{variant:"h5",sx:{fontWeight:800,mb:2},children:"Parcel Locator"}),r.jsx(e,{color:"text.secondary",children:"Use the Dashboard for quick search, or this page for advanced queries (Under Construction)."})]})}export{s as default};

@@ -14,10 +14,11 @@ import { useEffect } from 'react';
 import { shipmentsApi } from '../api/endpoints';
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string; icon: React.ReactNode }> = {
-  AWAITING_REVIEW: { label: 'Awaiting Review', bg: '#FEF3C7', color: '#D97706', icon: <HourglassTop sx={{ fontSize: 16 }} /> },
-  APPROVED: { label: 'Approved', bg: '#D1FAE5', color: '#059669', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
-  MODIFIED: { label: 'Approved w/ Conditions', bg: '#DBEAFE', color: '#2563EB', icon: <Edit sx={{ fontSize: 16 }} /> },
-  REJECTED: { label: 'Rejected', bg: '#FEE2E2', color: '#DC2626', icon: <Cancel sx={{ fontSize: 16 }} /> },
+  DRAFT: { label: 'Awaiting Review', bg: '#FEF3C7', color: '#D97706', icon: <HourglassTop sx={{ fontSize: 16 }} /> },
+  WAREHOUSE_APPROVED: { label: 'Approved', bg: '#D1FAE5', color: '#059669', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
+  LOGISTICS_SELECTED: { label: 'Logistics Selected', bg: '#DBEAFE', color: '#2563EB', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
+  DRIVER_ASSIGNED: { label: 'Driver Assigned', bg: '#DBEAFE', color: '#2563EB', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
+  CANCELLED: { label: 'Rejected', bg: '#FEE2E2', color: '#DC2626', icon: <Cancel sx={{ fontSize: 16 }} /> },
 };
 
 export default function WarehouseRequestsPage() {
@@ -70,7 +71,7 @@ export default function WarehouseRequestsPage() {
                   <TableCell colSpan={8} align="center" sx={{ py: 3 }}>No warehouse requests found.</TableCell>
                 </TableRow>
               ) : requests.map(req => {
-                const st = STATUS_MAP[req.status] || STATUS_MAP.AWAITING_REVIEW;
+                const st = STATUS_MAP[req.status] || { label: req.status, bg: '#E2E8F0', color: '#64748B', icon: <HourglassTop sx={{ fontSize: 16 }} /> };
                 return (
                   <TableRow key={req.id} hover>
                     <TableCell>
@@ -91,7 +92,7 @@ export default function WarehouseRequestsPage() {
                     <TableCell>
                       <Chip
                         icon={st.icon as any}
-                        label={req.status}
+                        label={st.label}
                         size="small"
                         sx={{ fontWeight: 700, borderRadius: '8px', bgcolor: st.bg, color: st.color }}
                       />

@@ -31,6 +31,7 @@ export const shipmentsApi = {
     client.post(`/shipments/${id}/assign-driver/`, { driver_id: driverId }),
   reserveDock: (id: number, dockId: number) =>
     client.post(`/shipments/${id}/reserve-dock/`, { dock_id: dockId }),
+  markLoadingComplete: (id: string) => client.post(`/shipments/${id}/mark-loading-complete/`),
   dispatch: (id: number) => client.post(`/shipments/${id}/dispatch/`),
   cancel: (id: number, reason: string) =>
     client.post(`/shipments/${id}/cancel/`, { reason }),

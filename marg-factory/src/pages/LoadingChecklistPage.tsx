@@ -66,9 +66,9 @@ export default function LoadingChecklistPage() {
     if (!id || !allMandatoryChecked) return;
     setDispatching(true);
     try {
-      await shipmentsApi.dispatch(Number(id));
+      await shipmentsApi.markLoadingComplete(Number(id));
       alert('Shipment marked ready for transit!');
-      navigate(`/shipments/${id}`);
+      navigate('/shipment-readiness');
     } catch (e) {
       console.error(e);
       alert('Error dispatching shipment.');

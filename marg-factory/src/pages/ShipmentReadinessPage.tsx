@@ -7,17 +7,56 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { shipmentsApi } from '../api/endpoints';
 
+const STATUS_ORDER = [
+  'DRAFT',
+  'WAREHOUSE_APPROVED',
+  'LOGISTICS_SELECTED',
+  'DRIVER_ASSIGNED',
+  'READY_FOR_PICKUP',
+  'LOADING_IN_PROGRESS',
+  'READY_FOR_TRANSIT',
+  'IN_TRANSIT',
+  'APPROACHING_DESTINATION',
+  'ARRIVED_AT_GATE',
+  'RECEIVING_IN_PROGRESS',
+  'SLOTTING_IN_PROGRESS',
+  'COMPLETED'
+];
+
+const getStatusIndex = (st: string) => STATUS_ORDER.indexOf(st);
+const isAtLeast = (current: string, target: string) => getStatusIndex(current) >= getStatusIndex(target);
+
 export default function ShipmentReadinessPage() {
   const navigate = useNavigate();
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dispatchingId, setDispatchingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  const fetchShipments = () => {
+    setLoading(true);
     shipmentsApi.list()
       .then(res => setShipments(res.data.results || res.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchShipments();
   }, []);
+
+  const handleDispatch = async (id: number) => {
+    try {
+      setDispatchingId(id);
+      await shipmentsApi.dispatch(id);
+      alert('Shipment dispatched successfully!');
+      fetchShipments();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to dispatch shipment.');
+    } finally {
+      setDispatchingId(null);
+    }
+  };
 
   return (
     <Box>
@@ -42,18 +81,26 @@ export default function ShipmentReadinessPage() {
             <Typography variant="body2" sx={{ py: 4, textAlign: 'center', color: '#8A7F75' }}>No shipments found.</Typography>
           </Grid>
         ) : shipments.map(shipment => {
-          // Dummy logic for score based on status
-          let score = 20;
-          if (shipment.status === 'APPROVED' || shipment.status === 'READY') score = 60;
-          if (shipment.status === 'READY_FOR_TRANSIT' || shipment.status === 'IN_TRANSIT') score = 100;
+          const isWarehouseApproved = isAtLeast(shipment.status, 'WAREHOUSE_APPROVED');
+          const isLogisticsSelected = isAtLeast(shipment.status, 'LOGISTICS_SELECTED');
+          const isDriverAssigned = isAtLeast(shipment.status, 'DRIVER_ASSIGNED') || !!shipment.assigned_driver;
+          const isLoadingComplete = isAtLeast(shipment.status, 'LOADING_IN_PROGRESS');
+
+          let completedCount = 1; // Lots Verified is always done
+          if (isWarehouseApproved) completedCount++;
+          if (isLogisticsSelected) completedCount++;
+          if (isDriverAssigned) completedCount++;
+          if (isLoadingComplete) completedCount++;
+
+          const score = (completedCount / 5) * 100;
+          const isReady = score === 100 && isAtLeast(shipment.status, 'LOADING_IN_PROGRESS');
           
-          const isReady = score === 100;
           const tasks = [
             { name: 'Lots Verified', status: 'DONE' },
-            { name: 'Warehouse Approved', status: score >= 60 ? 'DONE' : 'PENDING' },
-            { name: 'Logistics Partner Selected', status: score >= 60 ? 'DONE' : 'PENDING' },
-            { name: 'Driver Assigned', status: score >= 100 ? 'DONE' : 'PENDING' },
-            { name: 'Loading Checklist Completed', status: score >= 100 ? 'DONE' : 'PENDING' },
+            { name: 'Warehouse Approved', status: isWarehouseApproved ? 'DONE' : 'PENDING' },
+            { name: 'Logistics Partner Selected', status: isLogisticsSelected ? 'DONE' : 'PENDING' },
+            { name: 'Driver Assigned', status: isDriverAssigned ? 'DONE' : 'PENDING' },
+            { name: 'Loading Checklist Completed', status: isLoadingComplete ? 'DONE' : 'PENDING' },
           ];
 
           return (
@@ -116,11 +163,11 @@ export default function ShipmentReadinessPage() {
                     variant={isReady ? "contained" : "outlined"} 
                     color={isReady ? "success" : "primary"}
                     fullWidth 
-                    startIcon={isReady ? <AssignmentTurnedIn /> : <ArrowForward />}
-                    disabled={!isReady}
-                    onClick={() => navigate(`/loading-checklist/${shipment.id}`)}
+                    startIcon={isReady ? (dispatchingId === shipment.id ? <CircularProgress size={20} color="inherit" /> : <AssignmentTurnedIn />) : <ArrowForward />}
+                    disabled={(!isReady && isLoadingComplete) || dispatchingId === shipment.id || isAtLeast(shipment.status, 'READY_FOR_TRANSIT')}
+                    onClick={() => isReady ? handleDispatch(shipment.id) : navigate(`/loading-checklist/${shipment.id}`)}
                   >
-                    {isReady ? "Ready for Dispatch" : "Complete Pending Tasks"}
+                    {isAtLeast(shipment.status, 'READY_FOR_TRANSIT') ? "Dispatched" : (isReady ? "Ready for Dispatch" : "Complete Pending Tasks")}
                   </Button>
                 </CardContent>
               </Card>

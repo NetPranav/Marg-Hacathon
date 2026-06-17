@@ -76,7 +76,7 @@ export default function CreateLotPage() {
   useEffect(() => {
     fleetApi.listWarehouses().then(res => setWarehouses(res.data.results || []));
     authApi.getProfile().then(res => {
-      const userFactory = res.data.organization?.factories?.[0]?.id;
+      const userFactory = res.data.data?.organization?.factories?.[0]?.id;
       if (userFactory) {
         setFactoryId(userFactory);
       } else {

@@ -16,7 +16,7 @@ export default function GatePage() {
   const payloadData = {
     manifestId: currentShipment?.shipment_number || "Loading...",
     vehicleMatch: currentShipment?.truck_reg || "Loading...",
-    destination: "WH-BAY-14" // This would eventually come from dock reservation
+    destination: currentShipment?.assigned_dock ? `WH-DOCK-${currentShipment.assigned_dock.name}` : "Pending Assignment"
   };
   
   const qrPayload = JSON.stringify(payloadData);
@@ -32,7 +32,7 @@ export default function GatePage() {
         
         <PayloadPanel data={payloadData} />
         
-        <DockAllocation />
+        <DockAllocation assignedDockName={currentShipment?.assigned_dock?.name} />
         
         <LiveQueue 
           trucksAhead={6}

@@ -2,8 +2,16 @@
 
 import { motion } from "framer-motion";
 import { Gauge, Clock } from "lucide-react";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function MetricsGrid() {
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  const currentShipment = activeShipments[0];
+
+  const speed = currentShipment ? "72" : "--";
+  const dutyHrs = currentShipment ? "05" : "--";
+  const dutyMins = currentShipment ? "12" : "--";
+
   return (
     <div className="flex gap-4 mx-6 mb-4">
       {/* Current Speed Card */}
@@ -21,7 +29,7 @@ export default function MetricsGrid() {
         </div>
         
         <div className="relative z-10 flex items-baseline gap-1">
-          <span className="text-4xl font-light tracking-tighter text-brand-text">72</span>
+          <span className="text-4xl font-light tracking-tighter text-brand-text">{speed}</span>
           <span className="text-[10px] font-bold text-brand-text/60 tracking-wider">KM/H</span>
         </div>
       </motion.div>
@@ -42,9 +50,9 @@ export default function MetricsGrid() {
         
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-baseline text-brand-text gap-0.5">
-            <span className="text-4xl font-light tracking-tighter text-brand-text/40">05</span>
+            <span className="text-4xl font-light tracking-tighter text-brand-text/40">{dutyHrs}</span>
             <span className="text-2xl font-light tracking-tighter mb-1">:</span>
-            <span className="text-4xl font-light tracking-tighter">12</span>
+            <span className="text-4xl font-light tracking-tighter">{dutyMins}</span>
           </div>
           <div className="text-[10px] font-bold text-brand-text/60 tracking-wider leading-tight text-right w-8">
             Duty<br/>Hrs

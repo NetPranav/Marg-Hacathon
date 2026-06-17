@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Truck, X, Save, MapPin, Package, Fuel, Calendar } from "lucide-react";
+import { Plus, Search, Truck, X, Save, MapPin, Package, Fuel, Calendar, Pencil, Trash2, User } from "lucide-react";
 import api from "@/lib/api";
 
 const STATUS_OPTIONS = ["AVAILABLE", "ASSIGNED", "IN_TRANSIT", "UNDER_MAINTENANCE"];
@@ -19,6 +19,7 @@ export default function VehiclesPage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [form, setForm] = useState({
     registration_number: "", vehicle_type: "TRUCK", capacity_tons: "",
@@ -40,20 +41,47 @@ export default function VehiclesPage() {
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
-  const handleAdd = async () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post("/trucks/", {
+      const payload = {
         registration_number: form.registration_number,
         vehicle_type: form.vehicle_type,
         capacity_kg: (parseFloat(form.capacity_tons) || 10) * 1000,
         status: form.status,
-        ...(form.assigned_driver ? { assigned_driver: parseInt(form.assigned_driver) } : {}),
-      });
+        ...(form.assigned_driver ? { assigned_driver: parseInt(form.assigned_driver) } : { assigned_driver: null }),
+      };
+      if (editingId) {
+        await api.patch(`/trucks/${editingId}/`, payload);
+      } else {
+        await api.post("/trucks/", payload);
+      }
       setShowForm(false);
+      setEditingId(null);
       setForm({ registration_number: "", vehicle_type: "TRUCK", capacity_tons: "", fuel_type: "DIESEL", assigned_driver: "", status: "AVAILABLE" });
       loadData();
-    } catch (err) { console.error("Add vehicle error:", err); } finally { setSaving(false); }
+    } catch (err) { console.error("Save vehicle error:", err); } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this vehicle?")) return;
+    try {
+      await api.delete(`/trucks/${id}/`);
+      loadData();
+    } catch (err) { console.error("Delete vehicle error:", err); }
+  };
+
+  const handleEdit = (vehicle: any) => {
+    setForm({
+      registration_number: vehicle.registration_number || "",
+      vehicle_type: vehicle.vehicle_type || "TRUCK",
+      capacity_tons: vehicle.capacity_kg ? (vehicle.capacity_kg / 1000).toString() : "",
+      fuel_type: vehicle.fuel_type || "DIESEL",
+      assigned_driver: vehicle.assigned_driver ? vehicle.assigned_driver.toString() : "",
+      status: vehicle.status || "AVAILABLE",
+    });
+    setEditingId(vehicle.id);
+    setShowForm(true);
   };
 
   const filtered = vehicles.filter((v) => {
@@ -78,7 +106,7 @@ export default function VehiclesPage() {
           <h1 className="text-2xl font-bold text-brand-text">Vehicles</h1>
           <p className="text-sm text-brand-muted mt-1">{vehicles.length} vehicles in fleet</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors shadow-[0_4px_12px_rgba(255,123,71,0.2)]">
+        <button onClick={() => { setEditingId(null); setForm({ registration_number: "", vehicle_type: "TRUCK", capacity_tons: "", fuel_type: "DIESEL", assigned_driver: "", status: "AVAILABLE" }); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors shadow-[0_4px_12px_rgba(255,123,71,0.2)]">
           <Plus size={15} /> Add Vehicle
         </button>
       </div>
@@ -108,7 +136,7 @@ export default function VehiclesPage() {
       {showForm && (
         <div className="bg-white rounded-2xl border border-black/[0.06] p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-brand-text flex items-center gap-2"><Truck size={16} className="text-brand-orange" /> New Vehicle</h3>
+            <h3 className="font-semibold text-brand-text flex items-center gap-2"><Truck size={16} className="text-brand-orange" /> {editingId ? "Edit Vehicle" : "New Vehicle"}</h3>
             <button onClick={() => setShowForm(false)} className="p-1 hover:bg-black/5 rounded-lg"><X size={16} /></button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -135,8 +163,8 @@ export default function VehiclesPage() {
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <button onClick={handleAdd} disabled={saving || !form.registration_number} className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors disabled:opacity-50">
-              <Save size={15} /> {saving ? "Adding..." : "Add Vehicle"}
+            <button onClick={handleSave} disabled={saving || !form.registration_number} className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors disabled:opacity-50">
+              <Save size={15} /> {saving ? "Saving..." : (editingId ? "Save Changes" : "Add Vehicle")}
             </button>
           </div>
         </div>
@@ -152,16 +180,22 @@ export default function VehiclesPage() {
           <div key={v.id} className="bg-white rounded-2xl p-5 border border-black/[0.04] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Truck size={18} /></div>
-              <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[v.status || "AVAILABLE"]}`}>
-                {(v.status || "AVAILABLE").replace(/_/g, " ")}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[v.status || "AVAILABLE"]}`}>
+                  {(v.status || "AVAILABLE").replace(/_/g, " ")}
+                </span>
+                <div className="flex gap-1">
+                  <button onClick={() => handleEdit(v)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={14} /></button>
+                  <button onClick={() => handleDelete(v.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={14} /></button>
+                </div>
+              </div>
             </div>
             <h3 className="font-semibold text-brand-text">{v.registration_number || v.vehicle_number || `Vehicle #${v.id}`}</h3>
             <p className="text-xs text-brand-muted mt-0.5">{v.vehicle_type || "Truck"}</p>
             <div className="mt-3 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-brand-muted"><Package size={11} /> Capacity: {v.capacity_tons || "—"} T</div>
+              <div className="flex items-center gap-2 text-xs text-brand-muted"><Package size={11} /> Capacity: {v.capacity_kg ? (v.capacity_kg / 1000) : "—"} T</div>
               <div className="flex items-center gap-2 text-xs text-brand-muted"><Fuel size={11} /> {v.fuel_type || "Diesel"}</div>
-              {v.driver_name && <div className="flex items-center gap-2 text-xs text-brand-muted"><MapPin size={11} /> {v.driver_name}</div>}
+              {v.assigned_driver_name && <div className="flex items-center gap-2 text-xs text-brand-muted"><User size={11} /> {v.assigned_driver_name}</div>}
             </div>
           </div>
         ))}

@@ -5,11 +5,16 @@ import { ArrowLeft, User, Truck, Shield, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { useRealtimeStore } from "@/store/realtimeStore";
 
 export default function ProfilePage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const activeShipments = useRealtimeStore((state) => state.activeShipments);
+  
+  const currentShipment = activeShipments[0];
+  const truckReg = currentShipment?.truck_reg || "Not Assigned";
 
   const handleLogout = () => {
     logout();
@@ -30,7 +35,7 @@ export default function ProfilePage() {
           <div className="w-24 h-24 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4">
             <User size={40} className="text-brand-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">{user?.full_name || "Driver Name"}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{user?.full_name || user?.first_name || "Driver Name"}</h2>
           <p className="text-gray-500 font-medium mb-4">{user?.email || "driver@logimind.com"}</p>
           <div className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wider">
             Active Status
@@ -44,7 +49,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Assigned Vehicle</p>
-              <p className="text-lg font-bold text-gray-900">MH 12 AB 4582</p>
+              <p className="text-lg font-bold text-gray-900">{truckReg}</p>
             </div>
           </div>
           <div className="w-full h-px bg-gray-100" />
@@ -53,8 +58,8 @@ export default function ProfilePage() {
               <Shield size={24} />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">License Number</p>
-              <p className="text-lg font-bold text-gray-900">DL-14201100123</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">KYC Status</p>
+              <p className="text-lg font-bold text-gray-900">{user?.kyc_status?.replace('_', ' ') || "PENDING"}</p>
             </div>
           </div>
         </div>

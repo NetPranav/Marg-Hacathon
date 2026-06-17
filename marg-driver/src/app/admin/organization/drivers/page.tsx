@@ -25,7 +25,6 @@ export default function DriverAccountsPage() {
   const [createdCreds, setCreatedCreds] = useState<{ username: string; password: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [trucks, setTrucks] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     first_name: "",
@@ -33,7 +32,6 @@ export default function DriverAccountsPage() {
     phone: "",
     employee_id: "",
     license_number: "",
-    assigned_vehicle: "",
   });
 
   useEffect(() => {
@@ -42,14 +40,9 @@ export default function DriverAccountsPage() {
 
   const loadData = async () => {
     try {
-      const [driversRes, trucksRes] = await Promise.allSettled([
-        api.get("/drivers/"),
-        api.get("/trucks/"),
-      ]);
-      const driverList = driversRes.status === "fulfilled" ? (Array.isArray(driversRes.value.data) ? driversRes.value.data : driversRes.value.data.results || []) : [];
-      const truckList = trucksRes.status === "fulfilled" ? (Array.isArray(trucksRes.value.data) ? trucksRes.value.data : trucksRes.value.data.results || []) : [];
+      const driversRes = await api.get("/drivers/");
+      const driverList = Array.isArray(driversRes.data) ? driversRes.data : driversRes.data.results || [];
       setDrivers(driverList);
-      setTrucks(truckList);
     } catch (err) {
       console.error("Load error:", err);
     } finally {
@@ -82,11 +75,12 @@ export default function DriverAccountsPage() {
         password,
         role: "DRIVER",
         license_number: form.license_number,
+        employee_id: form.employee_id,
       });
 
       setCreatedCreds({ username, password });
       setShowForm(false);
-      setForm({ first_name: "", last_name: "", phone: "", employee_id: "", license_number: "", assigned_vehicle: "" });
+      setForm({ first_name: "", last_name: "", phone: "", employee_id: "", license_number: "" });
       loadData();
     } catch (err) {
       console.error("Create driver error:", err);
@@ -125,7 +119,11 @@ export default function DriverAccountsPage() {
           <p className="text-sm text-brand-muted mt-1">{drivers.length} registered drivers</p>
         </div>
         <button
-          onClick={() => { setShowForm(true); setCreatedCreds(null); }}
+          onClick={() => { 
+            setShowForm(true); 
+            setCreatedCreds(null); 
+            setForm(prev => ({ ...prev, employee_id: `drv-${drivers.length}` }));
+          }}
           className="flex items-center gap-2 px-4 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors shadow-[0_4px_12px_rgba(255,123,71,0.2)]"
         >
           <UserPlus size={15} /> Create Driver Account
@@ -204,19 +202,6 @@ export default function DriverAccountsPage() {
                 />
               </div>
             ))}
-            <div>
-              <label className="text-xs text-brand-muted font-medium uppercase tracking-wider">Assigned Vehicle</label>
-              <select
-                value={form.assigned_vehicle}
-                onChange={(e) => setForm({ ...form, assigned_vehicle: e.target.value })}
-                className="w-full mt-1 px-3 py-2 bg-brand-bg border border-black/[0.06] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-              >
-                <option value="">Select vehicle...</option>
-                {trucks.map((t: any) => (
-                  <option key={t.id} value={t.id}>{t.registration_number || t.vehicle_number || `Truck #${t.id}`}</option>
-                ))}
-              </select>
-            </div>
           </div>
           <p className="text-xs text-brand-muted mt-3 flex items-center gap-1.5">
             <KeyRound size={11} /> System will auto-generate username and temporary password.
@@ -248,7 +233,14 @@ export default function DriverAccountsPage() {
                   {d.user_name ? d.user_name.substring(0, 2).toUpperCase() : "DR"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-brand-text truncate">{d.user_name}</p>
+                  <p className="text-sm font-medium text-brand-text truncate">
+                    {d.user_name}
+                    {d.employee_id && (
+                      <span className="ml-2 text-[10px] font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                        {d.employee_id}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-brand-muted mt-0.5">{d.user_phone || d.user_email}</p>
                 </div>
                 {d.assigned_vehicle && (

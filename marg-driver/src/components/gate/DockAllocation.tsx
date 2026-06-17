@@ -3,13 +3,13 @@
 import { motion } from "framer-motion";
 import { CornerUpRight, ArrowRight } from "lucide-react";
 
-export default function DockAllocation() {
+export default function DockAllocation({ assignedDockName }: { assignedDockName?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-      className="mx-6 mb-4 bg-[#B84000] rounded-[1.5rem] p-6 shadow-glow relative overflow-hidden"
+      className={`mx-6 mb-4 ${assignedDockName ? 'bg-[#B84000]' : 'bg-[#475569]'} rounded-[1.5rem] p-6 shadow-glow relative overflow-hidden`}
     >
       {/* Background soft glow / abstract shapes */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full" />
@@ -24,12 +24,12 @@ export default function DockAllocation() {
             </span>
           </div>
           
-          <h2 className="text-[26px] leading-[1.1] font-bold text-white mb-3 tracking-tight">
-            PROCEED TO DOCK<br/>BAY #14
+          <h2 className="text-[26px] leading-[1.1] font-bold text-white mb-3 tracking-tight uppercase">
+            {assignedDockName ? `PROCEED TO DOCK\nBAY #${assignedDockName}` : "WAITING FOR DOCK\nASSIGNMENT"}
           </h2>
           
           <p className="text-white/80 text-sm font-medium leading-relaxed max-w-[200px]">
-            Take the second left after the weighbridge
+            {assignedDockName ? "Follow the signs after the weighbridge" : "Please remain in the holding area"}
           </p>
         </div>
 

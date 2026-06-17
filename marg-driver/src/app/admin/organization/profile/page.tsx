@@ -32,11 +32,11 @@ export default function CompanyProfilePage() {
         setOrgData(org);
         setForm({
           name: org.name || "",
-          registration_number: org.registration_number || org.gstin || "",
-          coverage_regions: org.coverage_regions || "Pan-India",
-          phone: org.phone || "",
+          registration_number: org.metadata?.registration_number || org.registration_number || org.gst_number || "",
+          coverage_regions: org.metadata?.coverage_regions || org.coverage_regions || "Pan-India",
+          phone: org.phone_number || org.phone || "",
           email: org.email || "",
-          address: org.address || "",
+          address: org.address || org.metadata?.company_address || "",
         });
       }
     } catch (err) {
@@ -51,9 +51,14 @@ export default function CompanyProfilePage() {
       if (orgData?.id) {
         await api.patch(`/organizations/${orgData.id}/`, {
           name: form.name,
-          phone: form.phone,
+          phone_number: form.phone,
           email: form.email,
           address: form.address,
+          metadata: {
+            ...(orgData.metadata || {}),
+            registration_number: form.registration_number,
+            coverage_regions: form.coverage_regions,
+          }
         });
       }
       setEditing(false);

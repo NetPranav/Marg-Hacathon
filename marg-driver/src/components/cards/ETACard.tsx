@@ -48,6 +48,22 @@ export default function ETACard() {
   // Mock telemetry data for ETA (we would calculate this from distance in production)
   const progressPercent = currentShipment ? 70 : 0; 
 
+  if (!currentShipment) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        className="bg-white rounded-[2rem] p-6 shadow-soft mx-6 mb-4 relative overflow-hidden border border-black/[0.03] flex items-center justify-center min-h-[220px]"
+      >
+        <div className="text-center">
+          <div className="text-brand-text/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Status</div>
+          <div className="text-xl font-semibold text-brand-text/60">No Active Shipment</div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -59,7 +75,8 @@ export default function ETACard() {
         
         {/* Destination Header */}
         <div className="text-[10px] font-bold tracking-widest text-brand-text/60 uppercase">
-          Destination: {destination}
+          Destination: {destination} <br />
+          {currentShipment?.assigned_dock ? `Assigned: Dock ${currentShipment.assigned_dock.name}` : "Pending Assignment"}
         </div>
 
         {/* ETA Section */}

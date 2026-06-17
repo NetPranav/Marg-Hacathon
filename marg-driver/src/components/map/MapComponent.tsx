@@ -51,12 +51,14 @@ export default function MapComponent() {
   const [originData, setOriginData] = useState({ lat: 19.0760, lng: 72.8777, name: "Mumbai Plant (Origin)" });
   const [destData, setDestData] = useState({ lat: 22.9676, lng: 76.0534, name: "Pranav (Dewas) (Destination)" });
   const [currentPos, setCurrentPos] = useState<[number, number]>([21.0, 74.5]);
+  const [hasActiveRoute, setHasActiveRoute] = useState(false);
 
   useEffect(() => {
     const fetchRoute = async () => {
       try {
         let oLat = 19.0760, oLng = 72.8777, oName = "Mumbai Plant (Origin)";
         let dLat = 22.9676, dLng = 76.0534, dName = "Pranav (Dewas) (Destination)";
+        let isActive = false;
 
         try {
           const res = await api.get('/shipments/');
@@ -64,6 +66,7 @@ export default function MapComponent() {
           const active = list.find((s: any) => ["READY_FOR_DISPATCH", "IN_TRANSIT", "DISPATCHED"].includes(s.status));
           
           if (active) {
+            isActive = true;
             if (active.origin_lat && active.origin_lng) {
               oLat = parseFloat(active.origin_lat);
               oLng = parseFloat(active.origin_lng);
@@ -77,6 +80,14 @@ export default function MapComponent() {
           }
         } catch (e) {
           console.error("Failed to fetch dynamic locations", e);
+        }
+
+        setHasActiveRoute(isActive);
+
+        if (!isActive) {
+           // Provide a default current pos if no active route, or could use geolocation
+           setCurrentPos([22.7196, 75.8577]); // Indore
+           return;
         }
 
         setOriginData({ lat: oLat, lng: oLng, name: oName });
@@ -103,13 +114,15 @@ export default function MapComponent() {
   return (
     <div className="w-full h-full relative">
       {/* Label Overlay */}
-      <div className="absolute top-4 left-4 z-[400] bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-semibold flex items-center gap-2 text-brand-text">
-        <span className="text-brand-orange text-lg">◬</span> {originData.name.split(' ')[0]} to {destData.name.split(' ')[0]}
-      </div>
+      {hasActiveRoute && (
+        <div className="absolute top-4 left-4 z-[400] bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-semibold flex items-center gap-2 text-brand-text">
+          <span className="text-brand-orange text-lg">◬</span> {originData.name.split(' ')[0]} to {destData.name.split(' ')[0]}
+        </div>
+      )}
 
       <MapContainer
         center={currentPos}
-        zoom={6}
+        zoom={hasActiveRoute ? 6 : 10}
         scrollWheelZoom={false}
         zoomControl={false}
         attributionControl={false}
@@ -120,7 +133,7 @@ export default function MapComponent() {
           opacity={0.8}
         />
         
-        {routeCoords.length > 0 && (
+        {hasActiveRoute && routeCoords.length > 0 && (
           <Polyline 
             positions={routeCoords} 
             pathOptions={{ 
@@ -134,13 +147,13 @@ export default function MapComponent() {
         )}
 
         {/* Start Point */}
-        <Marker position={[originData.lat, originData.lng]} icon={createDotIcon("#FF7B47", 16)} />
+        {hasActiveRoute && <Marker position={[originData.lat, originData.lng]} icon={createDotIcon("#FF7B47", 16)} />}
         
         {/* Current Truck Location */}
         <Marker position={currentPos} icon={createDotIcon("#FF7B47", 24)} />
         
         {/* Destination */}
-        <Marker position={[destData.lat, destData.lng]} icon={createDotIcon("#FF7B47", 16)} />
+        {hasActiveRoute && <Marker position={[destData.lat, destData.lng]} icon={createDotIcon("#FF7B47", 16)} />}
 
         <MapControls currentPos={currentPos} />
       </MapContainer>

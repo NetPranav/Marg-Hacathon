@@ -149,7 +149,7 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
               const py = sy + 0.03 + ph / 2; // Resting on the shelf platform
               const isParcelSelected =
                 useSlottingStore.getState().selectedParcel?.id === parcel.id;
-              const isMultiSelected = useSlottingStore.getState().selectedParcelIds.includes(parcel.id);
+              const isMultiSelected = useSlottingStore.getState().selectedParcelIds.includes(String(parcel.id));
 
               return (
                 <group key={parcel.id} position={[Math.min(px, w / 2 - pw / 2), py, 0]}>
@@ -159,7 +159,7 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
                     onClick={(e) => {
                       e.stopPropagation();
                       if (e.nativeEvent.ctrlKey || e.nativeEvent.metaKey || e.nativeEvent.shiftKey) {
-                        useSlottingStore.getState().toggleParcelSelection(parcel.id);
+                        useSlottingStore.getState().toggleParcelSelection(String(parcel.id));
                       } else {
                         useSlottingStore.getState().selectRack(config.rack_id);
                         useSlottingStore.getState().selectShelf(shelf.id);

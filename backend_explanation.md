@@ -1,0 +1,1132 @@
+# Backend Architecture & Data Schema
+
+This document provides a comprehensive overview of the Marg platform backend structure, logic, and data schema.
+
+## Executive Architecture Summary
+The Marg backend is built on **Django 5.0** and **Django REST Framework (DRF)**. It functions as a multi-tenant, microservices-inspired monolithic architecture designed to manage the entire lifecycle of logistics, warehousing, fleet management, and factory operations.
+
+### Key Architectural Concepts:
+1. **Multi-Tenancy (`organizations`)**: Every entity (Factory, Logistics Provider, Fleet Owner) operates under an `Organization`. The platform ensures data isolation by scoping models to their respective organization.
+2. **Role-Based Access Control (`accounts`)**: Custom `User` model integrating with Django's auth system. Users belong to organizations and have specific roles (e.g., ADMIN, DRIVER, WAREHOUSE_MANAGER).
+3. **Core Entities**: 
+   - **`factories` & `warehouses`**: Origin and destination nodes. Warehouses have 3D layouts, `racks`, `shelves`, and `dock_bays`.
+   - **`fleet`**: Manages `Trucks` and `Drivers`, tracking their status, capacity, and assignments.
+   - **`shipments` & `logistics`**: Core operational flows. `Lots` of parcels are dispatched from factories, assigned to logistics companies, and tracked via `Shipments`.
+4. **Advanced Operations**:
+   - **`telemetry`**: Processes real-time location and speed data for trucks.
+   - **`optimization`**: Predictive modeling for ETAs, return load matching, and dock recommendations.
+   - **`geofencing`**: Defines and tracks virtual boundaries around factories and warehouses for automated gate check-ins and check-outs.
+   - **`marketplace`**: A bidding system where loads can be posted and logistics companies can place competitive bids.
+   - **`chat`**: Integrated communication threads linked to shipments, loads, and bids.
+
+## Applications & Data Schema
+
+### Django_celery_beat
+**Responsibilities:** Handles data and logic related to django_celery_beat.
+
+#### Models
+- **SolarSchedule**
+  - `periodictask`: ForeignKey (Foreign Key to PeriodicTask)
+  - `id`: AutoField
+  - `event`: CharField
+  - `latitude`: DecimalField
+  - `longitude`: DecimalField
+- **IntervalSchedule**
+  - `periodictask`: ForeignKey (Foreign Key to PeriodicTask)
+  - `id`: AutoField
+  - `every`: IntegerField
+  - `period`: CharField
+- **ClockedSchedule**
+  - `periodictask`: ForeignKey (Foreign Key to PeriodicTask)
+  - `id`: AutoField
+  - `clocked_time`: DateTimeField
+- **CrontabSchedule**
+  - `periodictask`: ForeignKey (Foreign Key to PeriodicTask)
+  - `id`: AutoField
+  - `minute`: CharField
+  - `hour`: CharField
+  - `day_of_month`: CharField
+  - `month_of_year`: CharField
+  - `day_of_week`: CharField
+  - `timezone`: CharField
+- **PeriodicTasks**
+  - `ident`: SmallIntegerField
+  - `last_update`: DateTimeField
+- **PeriodicTask**
+  - `id`: AutoField
+  - `name`: CharField
+  - `task`: CharField
+  - `interval`: ForeignKey (Foreign Key to IntervalSchedule)
+  - `crontab`: ForeignKey (Foreign Key to CrontabSchedule)
+  - `solar`: ForeignKey (Foreign Key to SolarSchedule)
+  - `clocked`: ForeignKey (Foreign Key to ClockedSchedule)
+  - `args`: TextField
+  - `kwargs`: TextField
+  - `queue`: CharField
+  - `exchange`: CharField
+  - `routing_key`: CharField
+  - `headers`: TextField
+  - `priority`: PositiveIntegerField
+  - `expires`: DateTimeField
+  - `expire_seconds`: PositiveIntegerField
+  - `one_off`: BooleanField
+  - `start_time`: DateTimeField
+  - `enabled`: BooleanField
+  - `last_run_at`: DateTimeField
+  - `total_run_count`: PositiveIntegerField
+  - `date_changed`: DateTimeField
+  - `description`: TextField
+
+### Accounts
+**Responsibilities:** Handles data and logic related to accounts.
+
+#### Models
+- **User**
+  - `logentry`: ForeignKey (Foreign Key to LogEntry)
+  - `outstandingtoken`: ForeignKey (Foreign Key to OutstandingToken)
+  - `created_factories`: ForeignKey (Foreign Key to Factory)
+  - `driver_profile`: OneToOneField (Foreign Key to Driver)
+  - `lot`: ForeignKey (Foreign Key to Lot)
+  - `created_shipments`: ForeignKey (Foreign Key to Shipment)
+  - `employee_profile`: OneToOneField (Foreign Key to EmployeeProfile)
+  - `shipment_events`: ForeignKey (Foreign Key to ShipmentEvent)
+  - `dock_reservations`: ForeignKey (Foreign Key to DockReservation)
+  - `verified_check_ins`: ForeignKey (Foreign Key to GateCheckIn)
+  - `reported_exceptions`: ForeignKey (Foreign Key to ExceptionReport)
+  - `chatmessage`: ForeignKey (Foreign Key to ChatMessage)
+  - `notifications`: ForeignKey (Foreign Key to Notification)
+  - `audit_logs`: ForeignKey (Foreign Key to AuditLog)
+  - `chat_threads`: ManyToManyField (Foreign Key to ChatThread)
+  - `chat_messages`: ForeignKey (Foreign Key to ChatMessage)
+  - `read_messages`: ManyToManyField (Foreign Key to ChatMessage)
+  - `posted_loads`: ForeignKey (Foreign Key to MarketplaceLoad)
+  - `placed_bids`: ForeignKey (Foreign Key to MarketplaceBid)
+  - `resolved_recommendations`: ForeignKey (Foreign Key to DockRecommendation)
+  - `id`: BigAutoField
+  - `password`: CharField
+  - `last_login`: DateTimeField
+  - `is_superuser`: BooleanField
+  - `is_staff`: BooleanField
+  - `is_active`: BooleanField
+  - `date_joined`: DateTimeField
+  - `email`: CharField
+  - `first_name`: CharField
+  - `last_name`: CharField
+  - `phone_number`: CharField
+  - `role`: CharField
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `kyc_status`: CharField
+  - `avatar`: FileField
+  - `is_phone_verified`: BooleanField
+  - `requires_password_change`: BooleanField
+  - `groups`: ManyToManyField (Foreign Key to Group)
+  - `user_permissions`: ManyToManyField (Foreign Key to Permission)
+
+### Organizations
+**Responsibilities:** Handles data and logic related to organizations.
+
+#### Models
+- **Organization**
+  - `members`: ForeignKey (Foreign Key to User)
+  - `factories`: ForeignKey (Foreign Key to Factory)
+  - `warehouses`: ForeignKey (Foreign Key to Warehouse)
+  - `drivers`: ForeignKey (Foreign Key to Driver)
+  - `trucks`: ForeignKey (Foreign Key to Truck)
+  - `handled_shipments`: ForeignKey (Foreign Key to Shipment)
+  - `employees`: ForeignKey (Foreign Key to EmployeeProfile)
+  - `audit_logs`: ForeignKey (Foreign Key to AuditLog)
+  - `locked_loads`: ForeignKey (Foreign Key to MarketplaceLoad)
+  - `marketplace_bids`: ForeignKey (Foreign Key to MarketplaceBid)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `address`: TextField
+  - `city`: CharField
+  - `state`: CharField
+  - `country`: CharField
+  - `name`: CharField
+  - `email`: CharField
+  - `phone_number`: CharField
+  - `gst_number`: CharField
+  - `org_type`: CharField
+  - `pan_number`: CharField
+  - `company_type`: CharField
+  - `logo`: FileField
+  - `is_verified`: BooleanField
+  - `metadata`: JSONField
+
+### Factories
+**Responsibilities:** Handles data and logic related to factories.
+
+#### Models
+- **Factory**
+  - `lots`: ForeignKey (Foreign Key to Lot)
+  - `shipments`: ForeignKey (Foreign Key to Shipment)
+  - `chat_rooms`: ForeignKey (Foreign Key to ChatRoom)
+  - `geofences`: ForeignKey (Foreign Key to Geofence)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `address`: TextField
+  - `city`: CharField
+  - `state`: CharField
+  - `country`: CharField
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `name`: CharField
+  - `latitude`: DecimalField
+  - `longitude`: DecimalField
+  - `created_by`: ForeignKey (Foreign Key to User)
+
+### Warehouses
+**Responsibilities:** Handles data and logic related to warehouses.
+
+#### Models
+- **Warehouse**
+  - `dock_bays`: ForeignKey (Foreign Key to DockBay)
+  - `racks`: ForeignKey (Foreign Key to Rack)
+  - `parcels`: ForeignKey (Foreign Key to Parcel)
+  - `incoming_lots`: ForeignKey (Foreign Key to Lot)
+  - `incoming_shipments`: ForeignKey (Foreign Key to Shipment)
+  - `geofences`: ForeignKey (Foreign Key to Geofence)
+  - `dock_recommendations`: ForeignKey (Foreign Key to DockRecommendation)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `address`: TextField
+  - `city`: CharField
+  - `state`: CharField
+  - `country`: CharField
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `name`: CharField
+  - `latitude`: DecimalField
+  - `longitude`: DecimalField
+  - `capacity`: PositiveIntegerField
+  - `warehouse_type`: CharField
+  - `operating_hours`: CharField
+  - `special_handling`: JSONField
+  - `max_concurrent_trucks`: PositiveIntegerField
+  - `layout_width`: FloatField
+  - `layout_depth`: FloatField
+  - `layout_height`: FloatField
+  - `width`: DecimalField
+  - `depth`: DecimalField
+  - `height`: DecimalField
+  - `layout_version`: PositiveIntegerField
+- **DockBay**
+  - `reservations`: ForeignKey (Foreign Key to DockReservation)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `dock_number`: CharField
+  - `status`: CharField
+  - `dock_type`: CharField
+  - `x_position`: DecimalField
+  - `z_position`: DecimalField
+- **Rack**
+  - `shelves`: ForeignKey (Foreign Key to Shelf)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `rack_id`: CharField
+  - `row_index`: PositiveIntegerField
+  - `col_index`: PositiveIntegerField
+  - `x_position`: DecimalField
+  - `z_position`: DecimalField
+  - `num_shelves`: PositiveIntegerField
+  - `shelf_width`: DecimalField
+  - `shelf_depth`: DecimalField
+  - `shelf_height`: DecimalField
+- **Shelf**
+  - `parcels`: ForeignKey (Foreign Key to Parcel)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `rack`: ForeignKey (Foreign Key to Rack)
+  - `level`: PositiveIntegerField
+  - `available_volume`: DecimalField
+  - `occupied_volume`: DecimalField
+  - `max_weight`: DecimalField
+  - `current_weight`: DecimalField
+  - `is_locked`: BooleanField
+  - `is_reserved`: BooleanField
+- **Parcel**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `parcel_id`: CharField
+  - `warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `shelf`: ForeignKey (Foreign Key to Shelf)
+  - `height`: DecimalField
+  - `width`: DecimalField
+  - `depth`: DecimalField
+  - `weight`: DecimalField
+  - `color`: CharField
+  - `destination`: CharField
+  - `expected_dispatch_date`: DateField
+  - `priority`: CharField
+  - `special_handling`: TextField
+  - `position_label`: CharField
+  - `status`: CharField
+
+### Fleet
+**Responsibilities:** Handles data and logic related to fleet.
+
+#### Models
+- **Driver**
+  - `assigned_truck`: OneToOneField (Foreign Key to Truck)
+  - `shipments`: ForeignKey (Foreign Key to Shipment)
+  - `telemetry_points`: ForeignKey (Foreign Key to TelemetryPoint)
+  - `return_load_matches`: ForeignKey (Foreign Key to ReturnLoad)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `user`: OneToOneField (Foreign Key to User)
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `license_number`: CharField
+  - `employee_id`: CharField
+  - `license_expiry`: DateField
+  - `aadhaar_number`: CharField
+  - `emergency_contact`: CharField
+  - `is_available`: BooleanField
+  - `license_image`: FileField
+  - `profile_photo`: FileField
+  - `vahan_verified`: BooleanField
+  - `rating`: DecimalField
+  - `total_trips`: PositiveIntegerField
+  - `total_distance_km`: DecimalField
+  - `fuel_efficiency_rating`: DecimalField
+- **Truck**
+  - `shipments`: ForeignKey (Foreign Key to Shipment)
+  - `telemetry_points`: ForeignKey (Foreign Key to TelemetryPoint)
+  - `return_load_matches`: ForeignKey (Foreign Key to ReturnLoad)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `registration_number`: CharField
+  - `vehicle_type`: CharField
+  - `capacity_kg`: DecimalField
+  - `volume_m3`: DecimalField
+  - `manufacturing_year`: PositiveIntegerField
+  - `status`: CharField
+  - `assigned_driver`: OneToOneField (Foreign Key to Driver)
+  - `current_latitude`: DecimalField
+  - `current_longitude`: DecimalField
+  - `last_telemetry_at`: DateTimeField
+  - `fuel_capacity_liters`: DecimalField
+  - `next_service_date`: DateField
+  - `insurance_expiry_date`: DateField
+  - `fitness_cert_expiry_date`: DateField
+
+### Shipments
+**Responsibilities:** Handles data and logic related to shipments.
+
+#### Models
+- **Lot**
+  - `parcels`: ForeignKey (Foreign Key to LotParcel)
+  - `shipments`: ForeignKey (Foreign Key to Shipment)
+  - `chat_rooms`: ForeignKey (Foreign Key to ChatRoom)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `lot_number`: CharField
+  - `factory`: ForeignKey (Foreign Key to Factory)
+  - `destination_warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `status`: CharField
+  - `assigned_logistics_company`: ForeignKey (Foreign Key to LogisticsCompany)
+  - `expected_dispatch_date`: DateField
+  - `created_by`: ForeignKey (Foreign Key to User)
+- **LotParcel**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `lot`: ForeignKey (Foreign Key to Lot)
+  - `parcel_id`: CharField
+  - `length`: DecimalField
+  - `width`: DecimalField
+  - `height`: DecimalField
+  - `weight`: DecimalField
+  - `quantity`: PositiveIntegerField
+  - `dispatch_priority`: CharField
+  - `product_name`: CharField
+  - `sku`: CharField
+  - `batch_number`: CharField
+  - `is_fragile`: BooleanField
+  - `temperature_requirement`: CharField
+  - `insurance_value`: DecimalField
+  - `notes`: TextField
+- **Shipment**
+  - `events`: ForeignKey (Foreign Key to ShipmentEvent)
+  - `dock_reservations`: ForeignKey (Foreign Key to DockReservation)
+  - `gate_check_in`: OneToOneField (Foreign Key to GateCheckIn)
+  - `exception_reports`: ForeignKey (Foreign Key to ExceptionReport)
+  - `notifications`: ForeignKey (Foreign Key to Notification)
+  - `chat_threads`: ForeignKey (Foreign Key to ChatThread)
+  - `marketplace_load`: OneToOneField (Foreign Key to MarketplaceLoad)
+  - `telemetry_points`: ForeignKey (Foreign Key to TelemetryPoint)
+  - `eta_predictions`: ForeignKey (Foreign Key to ETAPrediction)
+  - `return_load_opportunities`: ForeignKey (Foreign Key to ReturnLoad)
+  - `return_load_matches`: ForeignKey (Foreign Key to ReturnLoad)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment_number`: CharField
+  - `factory`: ForeignKey (Foreign Key to Factory)
+  - `destination_warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `lot`: ForeignKey (Foreign Key to Lot)
+  - `assigned_truck`: ForeignKey (Foreign Key to Truck)
+  - `assigned_driver`: ForeignKey (Foreign Key to Driver)
+  - `shipment_type`: CharField
+  - `priority`: CharField
+  - `status`: CharField
+  - `expected_dispatch_time`: DateTimeField
+  - `expected_arrival_time`: DateTimeField
+  - `actual_dispatch_time`: DateTimeField
+  - `actual_arrival_time`: DateTimeField
+  - `created_by`: ForeignKey (Foreign Key to User)
+  - `logistics_provider`: ForeignKey (Foreign Key to Organization)
+  - `total_distance_km`: DecimalField
+  - `estimated_revenue`: DecimalField
+  - `pod_submitted`: BooleanField
+  - `is_verified`: BooleanField
+
+### Operations
+**Responsibilities:** Handles data and logic related to operations.
+
+#### Models
+- **EmployeeProfile**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `user`: OneToOneField (Foreign Key to User)
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `department`: CharField
+  - `operational_role`: CharField
+  - `shift_type`: CharField
+- **ShipmentEvent**
+  - `id`: BigAutoField
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `event_type`: CharField
+  - `description`: TextField
+  - `performed_by`: ForeignKey (Foreign Key to User)
+  - `metadata`: JSONField
+  - `created_at`: DateTimeField
+- **DockReservation**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `dock`: ForeignKey (Foreign Key to DockBay)
+  - `reserved_by`: ForeignKey (Foreign Key to User)
+  - `reserved_at`: DateTimeField
+  - `reservation_status`: CharField
+  - `check_in_time`: DateTimeField
+  - `check_out_time`: DateTimeField
+- **GateCheckIn**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment`: OneToOneField (Foreign Key to Shipment)
+  - `verified_by`: ForeignKey (Foreign Key to User)
+  - `status`: CharField
+  - `truck_number`: CharField
+  - `driver_name`: CharField
+  - `seal_number`: CharField
+  - `documents_verified`: BooleanField
+  - `notes`: TextField
+- **ExceptionReport**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `reported_by`: ForeignKey (Foreign Key to User)
+  - `exception_type`: CharField
+  - `description`: TextField
+  - `photo`: FileField
+  - `status`: CharField
+  - `resolution_notes`: TextField
+
+### Logistics
+**Responsibilities:** Handles data and logic related to logistics.
+
+#### Models
+- **LogisticsCompany**
+  - `assigned_lots`: ForeignKey (Foreign Key to Lot)
+  - `chat_rooms`: ForeignKey (Foreign Key to ChatRoom)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `name`: CharField
+  - `contact_email`: CharField
+  - `contact_phone`: CharField
+  - `rating`: DecimalField
+  - `fleet_size`: PositiveIntegerField
+  - `coverage_regions`: JSONField
+  - `average_response_time_mins`: PositiveIntegerField
+  - `completed_jobs`: PositiveIntegerField
+- **ChatRoom**
+  - `messages`: ForeignKey (Foreign Key to ChatMessage)
+  - `quotes`: ForeignKey (Foreign Key to LotQuote)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `factory`: ForeignKey (Foreign Key to Factory)
+  - `logistics_company`: ForeignKey (Foreign Key to LogisticsCompany)
+  - `lot`: ForeignKey (Foreign Key to Lot)
+- **ChatMessage**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `room`: ForeignKey (Foreign Key to ChatRoom)
+  - `sender`: ForeignKey (Foreign Key to User)
+  - `is_from_logistics`: BooleanField
+  - `text`: TextField
+  - `attachment_url`: CharField
+  - `read`: BooleanField
+- **LotQuote**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `room`: ForeignKey (Foreign Key to ChatRoom)
+  - `price`: DecimalField
+  - `currency`: CharField
+  - `estimated_delivery_hours`: PositiveIntegerField
+  - `number_of_vehicles`: PositiveIntegerField
+  - `special_conditions`: TextField
+  - `status`: CharField
+
+### Notifications
+**Responsibilities:** Handles data and logic related to notifications.
+
+#### Models
+- **Notification**
+  - `id`: BigAutoField
+  - `recipient`: ForeignKey (Foreign Key to User)
+  - `title`: CharField
+  - `message`: TextField
+  - `notification_type`: CharField
+  - `is_read`: BooleanField
+  - `related_shipment`: ForeignKey (Foreign Key to Shipment)
+  - `created_at`: DateTimeField
+
+### Audit
+**Responsibilities:** Handles data and logic related to audit.
+
+#### Models
+- **AuditLog**
+  - `id`: BigAutoField
+  - `organization`: ForeignKey (Foreign Key to Organization)
+  - `actor`: ForeignKey (Foreign Key to User)
+  - `action`: CharField
+  - `resource_type`: CharField
+  - `resource_id`: PositiveIntegerField
+  - `previous_state`: JSONField
+  - `new_state`: JSONField
+  - `ip_address`: GenericIPAddressField
+  - `metadata`: JSONField
+  - `timestamp`: DateTimeField
+
+### Chat
+**Responsibilities:** Handles data and logic related to chat.
+
+#### Models
+- **ChatThread**
+  - `messages`: ForeignKey (Foreign Key to ChatMessage)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `load`: ForeignKey (Foreign Key to MarketplaceLoad)
+  - `bid`: ForeignKey (Foreign Key to MarketplaceBid)
+  - `is_active`: BooleanField
+  - `last_message_at`: DateTimeField
+  - `participants`: ManyToManyField (Foreign Key to User)
+- **ChatMessage**
+  - `id`: BigAutoField
+  - `thread`: ForeignKey (Foreign Key to ChatThread)
+  - `sender`: ForeignKey (Foreign Key to User)
+  - `message_type`: CharField
+  - `content`: TextField
+  - `attachment`: FileField
+  - `is_read`: BooleanField
+  - `created_at`: DateTimeField
+  - `read_by`: ManyToManyField (Foreign Key to User)
+
+### Marketplace
+**Responsibilities:** Handles data and logic related to marketplace.
+
+#### Models
+- **MarketplaceLoad**
+  - `chat_threads`: ForeignKey (Foreign Key to ChatThread)
+  - `bids`: ForeignKey (Foreign Key to MarketplaceBid)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `shipment`: OneToOneField (Foreign Key to Shipment)
+  - `title`: CharField
+  - `origin_name`: CharField
+  - `destination_name`: CharField
+  - `origin_lat`: DecimalField
+  - `origin_lng`: DecimalField
+  - `dest_lat`: DecimalField
+  - `dest_lng`: DecimalField
+  - `cargo_type`: CharField
+  - `weight_kg`: DecimalField
+  - `rate_per_km`: DecimalField
+  - `total_distance_km`: DecimalField
+  - `estimated_revenue`: DecimalField
+  - `load_type`: CharField
+  - `status`: CharField
+  - `vehicle_type_required`: CharField
+  - `locked_by`: ForeignKey (Foreign Key to Organization)
+  - `locked_at`: DateTimeField
+  - `expires_at`: DateTimeField
+  - `posted_by`: ForeignKey (Foreign Key to User)
+- **MarketplaceBid**
+  - `chat_threads`: ForeignKey (Foreign Key to ChatThread)
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `load`: ForeignKey (Foreign Key to MarketplaceLoad)
+  - `bidder`: ForeignKey (Foreign Key to Organization)
+  - `bid_by`: ForeignKey (Foreign Key to User)
+  - `bid_amount`: DecimalField
+  - `notes`: TextField
+  - `is_accepted`: BooleanField
+  - `accepted_at`: DateTimeField
+
+### Telemetry
+**Responsibilities:** Handles data and logic related to telemetry.
+
+#### Models
+- **TelemetryPoint**
+  - `id`: BigAutoField
+  - `driver`: ForeignKey (Foreign Key to Driver)
+  - `truck`: ForeignKey (Foreign Key to Truck)
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `latitude`: DecimalField
+  - `longitude`: DecimalField
+  - `speed`: DecimalField
+  - `heading`: DecimalField
+  - `battery_level`: PositiveSmallIntegerField
+  - `recorded_at`: DateTimeField
+
+### Geofencing
+**Responsibilities:** Handles data and logic related to geofencing.
+
+#### Models
+- **Geofence**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `name`: CharField
+  - `warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `factory`: ForeignKey (Foreign Key to Factory)
+  - `latitude`: DecimalField
+  - `longitude`: DecimalField
+  - `radius_km`: DecimalField
+  - `is_active`: BooleanField
+
+### Optimization
+**Responsibilities:** Handles data and logic related to optimization.
+
+#### Models
+- **ETAPrediction**
+  - `id`: BigAutoField
+  - `shipment`: ForeignKey (Foreign Key to Shipment)
+  - `predicted_eta`: DateTimeField
+  - `confidence`: DecimalField
+  - `delay_probability`: DecimalField
+  - `remaining_distance_km`: DecimalField
+  - `generated_at`: DateTimeField
+- **DockRecommendation**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `warehouse`: ForeignKey (Foreign Key to Warehouse)
+  - `recommendation_type`: CharField
+  - `affected_shipments`: JSONField
+  - `reason`: TextField
+  - `status`: CharField
+  - `resolved_by`: ForeignKey (Foreign Key to User)
+  - `resolved_at`: DateTimeField
+- **ReturnLoad**
+  - `id`: BigAutoField
+  - `created_at`: DateTimeField
+  - `updated_at`: DateTimeField
+  - `original_shipment`: ForeignKey (Foreign Key to Shipment)
+  - `return_shipment`: ForeignKey (Foreign Key to Shipment)
+  - `truck`: ForeignKey (Foreign Key to Truck)
+  - `driver`: ForeignKey (Foreign Key to Driver)
+  - `match_score`: DecimalField
+  - `distance_to_pickup`: DecimalField
+  - `estimated_revenue`: DecimalField
+  - `status`: CharField
+
+## API Endpoints
+
+The following URL patterns are exposed by the backend:
+
+- `/media/{path>.*)`
+- `/static/{path>.*)`
+- `admin/`
+- `admin/{url>.*)`
+- `admin//{app_label>auth|token_blacklist|django_celery_beat|accounts|organizations|factories|warehouses|fleet|shipments|operations|logistics|notifications|audit|telemetry|geofencing|optimization)/`
+- `admin/accounts/user/`
+- `admin/accounts/user/<id>/password/`
+- `admin/accounts/user/<path:object_id>/`
+- `admin/accounts/user/<path:object_id>/change/`
+- `admin/accounts/user/<path:object_id>/delete/`
+- `admin/accounts/user/<path:object_id>/history/`
+- `admin/accounts/user/add/`
+- `admin/audit/auditlog/`
+- `admin/audit/auditlog/<path:object_id>/`
+- `admin/audit/auditlog/<path:object_id>/change/`
+- `admin/audit/auditlog/<path:object_id>/delete/`
+- `admin/audit/auditlog/<path:object_id>/history/`
+- `admin/audit/auditlog/add/`
+- `admin/auth/group/`
+- `admin/auth/group/<path:object_id>/`
+- `admin/auth/group/<path:object_id>/change/`
+- `admin/auth/group/<path:object_id>/delete/`
+- `admin/auth/group/<path:object_id>/history/`
+- `admin/auth/group/add/`
+- `admin/autocomplete/`
+- `admin/django_celery_beat/clockedschedule/`
+- `admin/django_celery_beat/clockedschedule/<path:object_id>/`
+- `admin/django_celery_beat/clockedschedule/<path:object_id>/change/`
+- `admin/django_celery_beat/clockedschedule/<path:object_id>/delete/`
+- `admin/django_celery_beat/clockedschedule/<path:object_id>/history/`
+- `admin/django_celery_beat/clockedschedule/add/`
+- `admin/django_celery_beat/crontabschedule/`
+- `admin/django_celery_beat/crontabschedule/<path:object_id>/`
+- `admin/django_celery_beat/crontabschedule/<path:object_id>/change/`
+- `admin/django_celery_beat/crontabschedule/<path:object_id>/delete/`
+- `admin/django_celery_beat/crontabschedule/<path:object_id>/history/`
+- `admin/django_celery_beat/crontabschedule/add/`
+- `admin/django_celery_beat/intervalschedule/`
+- `admin/django_celery_beat/intervalschedule/<path:object_id>/`
+- `admin/django_celery_beat/intervalschedule/<path:object_id>/change/`
+- `admin/django_celery_beat/intervalschedule/<path:object_id>/delete/`
+- `admin/django_celery_beat/intervalschedule/<path:object_id>/history/`
+- `admin/django_celery_beat/intervalschedule/add/`
+- `admin/django_celery_beat/periodictask/`
+- `admin/django_celery_beat/periodictask/<path:object_id>/`
+- `admin/django_celery_beat/periodictask/<path:object_id>/change/`
+- `admin/django_celery_beat/periodictask/<path:object_id>/delete/`
+- `admin/django_celery_beat/periodictask/<path:object_id>/history/`
+- `admin/django_celery_beat/periodictask/add/`
+- `admin/django_celery_beat/solarschedule/`
+- `admin/django_celery_beat/solarschedule/<path:object_id>/`
+- `admin/django_celery_beat/solarschedule/<path:object_id>/change/`
+- `admin/django_celery_beat/solarschedule/<path:object_id>/delete/`
+- `admin/django_celery_beat/solarschedule/<path:object_id>/history/`
+- `admin/django_celery_beat/solarschedule/add/`
+- `admin/factories/factory/`
+- `admin/factories/factory/<path:object_id>/`
+- `admin/factories/factory/<path:object_id>/change/`
+- `admin/factories/factory/<path:object_id>/delete/`
+- `admin/factories/factory/<path:object_id>/history/`
+- `admin/factories/factory/add/`
+- `admin/fleet/driver/`
+- `admin/fleet/driver/<path:object_id>/`
+- `admin/fleet/driver/<path:object_id>/change/`
+- `admin/fleet/driver/<path:object_id>/delete/`
+- `admin/fleet/driver/<path:object_id>/history/`
+- `admin/fleet/driver/add/`
+- `admin/fleet/truck/`
+- `admin/fleet/truck/<path:object_id>/`
+- `admin/fleet/truck/<path:object_id>/change/`
+- `admin/fleet/truck/<path:object_id>/delete/`
+- `admin/fleet/truck/<path:object_id>/history/`
+- `admin/fleet/truck/add/`
+- `admin/geofencing/geofence/`
+- `admin/geofencing/geofence/<path:object_id>/`
+- `admin/geofencing/geofence/<path:object_id>/change/`
+- `admin/geofencing/geofence/<path:object_id>/delete/`
+- `admin/geofencing/geofence/<path:object_id>/history/`
+- `admin/geofencing/geofence/add/`
+- `admin/jsi18n/`
+- `admin/login/`
+- `admin/logistics/chatmessage/`
+- `admin/logistics/chatmessage/<path:object_id>/`
+- `admin/logistics/chatmessage/<path:object_id>/change/`
+- `admin/logistics/chatmessage/<path:object_id>/delete/`
+- `admin/logistics/chatmessage/<path:object_id>/history/`
+- `admin/logistics/chatmessage/add/`
+- `admin/logistics/chatroom/`
+- `admin/logistics/chatroom/<path:object_id>/`
+- `admin/logistics/chatroom/<path:object_id>/change/`
+- `admin/logistics/chatroom/<path:object_id>/delete/`
+- `admin/logistics/chatroom/<path:object_id>/history/`
+- `admin/logistics/chatroom/add/`
+- `admin/logistics/logisticscompany/`
+- `admin/logistics/logisticscompany/<path:object_id>/`
+- `admin/logistics/logisticscompany/<path:object_id>/change/`
+- `admin/logistics/logisticscompany/<path:object_id>/delete/`
+- `admin/logistics/logisticscompany/<path:object_id>/history/`
+- `admin/logistics/logisticscompany/add/`
+- `admin/logistics/lotquote/`
+- `admin/logistics/lotquote/<path:object_id>/`
+- `admin/logistics/lotquote/<path:object_id>/change/`
+- `admin/logistics/lotquote/<path:object_id>/delete/`
+- `admin/logistics/lotquote/<path:object_id>/history/`
+- `admin/logistics/lotquote/add/`
+- `admin/logout/`
+- `admin/notifications/notification/`
+- `admin/notifications/notification/<path:object_id>/`
+- `admin/notifications/notification/<path:object_id>/change/`
+- `admin/notifications/notification/<path:object_id>/delete/`
+- `admin/notifications/notification/<path:object_id>/history/`
+- `admin/notifications/notification/add/`
+- `admin/operations/dockreservation/`
+- `admin/operations/dockreservation/<path:object_id>/`
+- `admin/operations/dockreservation/<path:object_id>/change/`
+- `admin/operations/dockreservation/<path:object_id>/delete/`
+- `admin/operations/dockreservation/<path:object_id>/history/`
+- `admin/operations/dockreservation/add/`
+- `admin/operations/shipmentevent/`
+- `admin/operations/shipmentevent/<path:object_id>/`
+- `admin/operations/shipmentevent/<path:object_id>/change/`
+- `admin/operations/shipmentevent/<path:object_id>/delete/`
+- `admin/operations/shipmentevent/<path:object_id>/history/`
+- `admin/operations/shipmentevent/add/`
+- `admin/optimization/dockrecommendation/`
+- `admin/optimization/dockrecommendation/<path:object_id>/`
+- `admin/optimization/dockrecommendation/<path:object_id>/change/`
+- `admin/optimization/dockrecommendation/<path:object_id>/delete/`
+- `admin/optimization/dockrecommendation/<path:object_id>/history/`
+- `admin/optimization/dockrecommendation/add/`
+- `admin/optimization/etaprediction/`
+- `admin/optimization/etaprediction/<path:object_id>/`
+- `admin/optimization/etaprediction/<path:object_id>/change/`
+- `admin/optimization/etaprediction/<path:object_id>/delete/`
+- `admin/optimization/etaprediction/<path:object_id>/history/`
+- `admin/optimization/etaprediction/add/`
+- `admin/optimization/returnload/`
+- `admin/optimization/returnload/<path:object_id>/`
+- `admin/optimization/returnload/<path:object_id>/change/`
+- `admin/optimization/returnload/<path:object_id>/delete/`
+- `admin/optimization/returnload/<path:object_id>/history/`
+- `admin/optimization/returnload/add/`
+- `admin/organizations/organization/`
+- `admin/organizations/organization/<path:object_id>/`
+- `admin/organizations/organization/<path:object_id>/change/`
+- `admin/organizations/organization/<path:object_id>/delete/`
+- `admin/organizations/organization/<path:object_id>/history/`
+- `admin/organizations/organization/add/`
+- `admin/password_change/`
+- `admin/password_change/done/`
+- `admin/r/<int:content_type_id>/<path:object_id>/`
+- `admin/shipments/lot/`
+- `admin/shipments/lot/<path:object_id>/`
+- `admin/shipments/lot/<path:object_id>/change/`
+- `admin/shipments/lot/<path:object_id>/delete/`
+- `admin/shipments/lot/<path:object_id>/history/`
+- `admin/shipments/lot/add/`
+- `admin/shipments/lotparcel/`
+- `admin/shipments/lotparcel/<path:object_id>/`
+- `admin/shipments/lotparcel/<path:object_id>/change/`
+- `admin/shipments/lotparcel/<path:object_id>/delete/`
+- `admin/shipments/lotparcel/<path:object_id>/history/`
+- `admin/shipments/lotparcel/add/`
+- `admin/shipments/shipment/`
+- `admin/shipments/shipment/<path:object_id>/`
+- `admin/shipments/shipment/<path:object_id>/change/`
+- `admin/shipments/shipment/<path:object_id>/delete/`
+- `admin/shipments/shipment/<path:object_id>/history/`
+- `admin/shipments/shipment/add/`
+- `admin/telemetry/telemetrypoint/`
+- `admin/telemetry/telemetrypoint/<path:object_id>/`
+- `admin/telemetry/telemetrypoint/<path:object_id>/change/`
+- `admin/telemetry/telemetrypoint/<path:object_id>/delete/`
+- `admin/telemetry/telemetrypoint/<path:object_id>/history/`
+- `admin/telemetry/telemetrypoint/add/`
+- `admin/token_blacklist/blacklistedtoken/`
+- `admin/token_blacklist/blacklistedtoken/<path:object_id>/`
+- `admin/token_blacklist/blacklistedtoken/<path:object_id>/change/`
+- `admin/token_blacklist/blacklistedtoken/<path:object_id>/delete/`
+- `admin/token_blacklist/blacklistedtoken/<path:object_id>/history/`
+- `admin/token_blacklist/blacklistedtoken/add/`
+- `admin/token_blacklist/outstandingtoken/`
+- `admin/token_blacklist/outstandingtoken/<path:object_id>/`
+- `admin/token_blacklist/outstandingtoken/<path:object_id>/change/`
+- `admin/token_blacklist/outstandingtoken/<path:object_id>/delete/`
+- `admin/token_blacklist/outstandingtoken/<path:object_id>/history/`
+- `admin/token_blacklist/outstandingtoken/add/`
+- `admin/warehouses/dockbay/`
+- `admin/warehouses/dockbay/<path:object_id>/`
+- `admin/warehouses/dockbay/<path:object_id>/change/`
+- `admin/warehouses/dockbay/<path:object_id>/delete/`
+- `admin/warehouses/dockbay/<path:object_id>/history/`
+- `admin/warehouses/dockbay/add/`
+- `admin/warehouses/parcel/`
+- `admin/warehouses/parcel/<path:object_id>/`
+- `admin/warehouses/parcel/<path:object_id>/change/`
+- `admin/warehouses/parcel/<path:object_id>/delete/`
+- `admin/warehouses/parcel/<path:object_id>/history/`
+- `admin/warehouses/parcel/add/`
+- `admin/warehouses/rack/`
+- `admin/warehouses/rack/<path:object_id>/`
+- `admin/warehouses/rack/<path:object_id>/change/`
+- `admin/warehouses/rack/<path:object_id>/delete/`
+- `admin/warehouses/rack/<path:object_id>/history/`
+- `admin/warehouses/rack/add/`
+- `admin/warehouses/shelf/`
+- `admin/warehouses/shelf/<path:object_id>/`
+- `admin/warehouses/shelf/<path:object_id>/change/`
+- `admin/warehouses/shelf/<path:object_id>/delete/`
+- `admin/warehouses/shelf/<path:object_id>/history/`
+- `admin/warehouses/shelf/add/`
+- `admin/warehouses/warehouse/`
+- `admin/warehouses/warehouse/<path:object_id>/`
+- `admin/warehouses/warehouse/<path:object_id>/change/`
+- `admin/warehouses/warehouse/<path:object_id>/delete/`
+- `admin/warehouses/warehouse/<path:object_id>/history/`
+- `admin/warehouses/warehouse/add/`
+- `api/v1/`
+- `api/v1/<drf_format_suffix:format>`
+- `api/v1//dock-recommendations/`
+- `api/v1//dock-recommendations/{pk>[//.]+)/`
+- `api/v1//dock-recommendations/{pk>[//.]+)/approve/`
+- `api/v1//dock-recommendations/{pk>[//.]+)/approve.{format>[a-z0-9]+)/?`
+- `api/v1//dock-recommendations/{pk>[//.]+)/reject/`
+- `api/v1//dock-recommendations/{pk>[//.]+)/reject.{format>[a-z0-9]+)/?`
+- `api/v1//dock-recommendations/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1//dock-recommendations.{format>[a-z0-9]+)/?`
+- `api/v1//return-loads/`
+- `api/v1//return-loads/{pk>[//.]+)/`
+- `api/v1//return-loads/{pk>[//.]+)/accept/`
+- `api/v1//return-loads/{pk>[//.]+)/accept.{format>[a-z0-9]+)/?`
+- `api/v1//return-loads/{pk>[//.]+)/decline/`
+- `api/v1//return-loads/{pk>[//.]+)/decline.{format>[a-z0-9]+)/?`
+- `api/v1//return-loads/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1//return-loads.{format>[a-z0-9]+)/?`
+- `api/v1/audit-logs/`
+- `api/v1/audit-logs/<drf_format_suffix:format>`
+- `api/v1/audit-logs//`
+- `api/v1/audit-logs//{pk>[//.]+)/`
+- `api/v1/audit-logs//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/audit-logs//.{format>[a-z0-9]+)/?`
+- `api/v1/auth/change-password/`
+- `api/v1/auth/login/`
+- `api/v1/auth/logout/`
+- `api/v1/auth/me/`
+- `api/v1/auth/provision/`
+- `api/v1/auth/refresh/`
+- `api/v1/auth/register-factory/`
+- `api/v1/auth/register-warehouse/`
+- `api/v1/auth/register/`
+- `api/v1/auth/register/logistics/`
+- `api/v1/auth/send-otp/`
+- `api/v1/auth/verify-otp/`
+- `api/v1/chat/`
+- `api/v1/chat/<drf_format_suffix:format>`
+- `api/v1/chat//chatrooms/`
+- `api/v1/chat//chatrooms/{pk>[//.]+)/`
+- `api/v1/chat//chatrooms/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/chat//chatrooms.{format>[a-z0-9]+)/?`
+- `api/v1/chat//messages/`
+- `api/v1/chat//messages/{pk>[//.]+)/`
+- `api/v1/chat//messages/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/chat//messages.{format>[a-z0-9]+)/?`
+- `api/v1/chat//quotes/`
+- `api/v1/chat//quotes/{pk>[//.]+)/`
+- `api/v1/chat//quotes/{pk>[//.]+)/accept/`
+- `api/v1/chat//quotes/{pk>[//.]+)/accept.{format>[a-z0-9]+)/?`
+- `api/v1/chat//quotes/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/chat//quotes.{format>[a-z0-9]+)/?`
+- `api/v1/coordination/<str:shipment_id>/arrive/`
+- `api/v1/coordination/<str:shipment_id>/check-in/`
+- `api/v1/coordination/<str:shipment_id>/exceptions/`
+- `api/v1/coordination/driver/`
+- `api/v1/coordination/factory/`
+- `api/v1/coordination/warehouse/`
+- `api/v1/dashboard/driver/`
+- `api/v1/dashboard/factory/`
+- `api/v1/dashboard/warehouse/`
+- `api/v1/docks/`
+- `api/v1/docks/<drf_format_suffix:format>`
+- `api/v1/docks//`
+- `api/v1/docks//{pk>[//.]+)/`
+- `api/v1/docks//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/docks//.{format>[a-z0-9]+)/?`
+- `api/v1/drivers/`
+- `api/v1/drivers/<drf_format_suffix:format>`
+- `api/v1/drivers//`
+- `api/v1/drivers//{pk>[//.]+)/`
+- `api/v1/drivers//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/drivers//.{format>[a-z0-9]+)/?`
+- `api/v1/factories/`
+- `api/v1/factories/<drf_format_suffix:format>`
+- `api/v1/factories//`
+- `api/v1/factories//{pk>[//.]+)/`
+- `api/v1/factories//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/factories//.{format>[a-z0-9]+)/?`
+- `api/v1/geofences/`
+- `api/v1/geofences/<drf_format_suffix:format>`
+- `api/v1/geofences//`
+- `api/v1/geofences//{pk>[//.]+)/`
+- `api/v1/geofences//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/geofences//.{format>[a-z0-9]+)/?`
+- `api/v1/health/`
+- `api/v1/logistics/`
+- `api/v1/logistics/<drf_format_suffix:format>`
+- `api/v1/logistics//chatrooms/`
+- `api/v1/logistics//chatrooms/{pk>[//.]+)/`
+- `api/v1/logistics//chatrooms/{pk>[//.]+)/mark-read/`
+- `api/v1/logistics//chatrooms/{pk>[//.]+)/mark-read.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//chatrooms/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/logistics//chatrooms.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//companies/`
+- `api/v1/logistics//companies/{pk>[//.]+)/`
+- `api/v1/logistics//companies/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/logistics//companies.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//messages/`
+- `api/v1/logistics//messages/{pk>[//.]+)/`
+- `api/v1/logistics//messages/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/logistics//messages.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//quotes/`
+- `api/v1/logistics//quotes/{pk>[//.]+)/`
+- `api/v1/logistics//quotes/{pk>[//.]+)/accept/`
+- `api/v1/logistics//quotes/{pk>[//.]+)/accept.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//quotes/{pk>[//.]+)/reject/`
+- `api/v1/logistics//quotes/{pk>[//.]+)/reject.{format>[a-z0-9]+)/?`
+- `api/v1/logistics//quotes/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/logistics//quotes.{format>[a-z0-9]+)/?`
+- `api/v1/notifications/`
+- `api/v1/notifications/<drf_format_suffix:format>`
+- `api/v1/notifications//`
+- `api/v1/notifications//{pk>[//.]+)/`
+- `api/v1/notifications//{pk>[//.]+)/mark-read/`
+- `api/v1/notifications//{pk>[//.]+)/mark-read.{format>[a-z0-9]+)/?`
+- `api/v1/notifications//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/notifications//.{format>[a-z0-9]+)/?`
+- `api/v1/notifications//mark-all-read/`
+- `api/v1/notifications//mark-all-read.{format>[a-z0-9]+)/?`
+- `api/v1/notifications//unread-count/`
+- `api/v1/notifications//unread-count.{format>[a-z0-9]+)/?`
+- `api/v1/organizations/`
+- `api/v1/organizations/<drf_format_suffix:format>`
+- `api/v1/organizations//`
+- `api/v1/organizations//{pk>[//.]+)/`
+- `api/v1/organizations//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/organizations//.{format>[a-z0-9]+)/?`
+- `api/v1/parcels/`
+- `api/v1/parcels/`
+- `api/v1/parcels/<drf_format_suffix:format>`
+- `api/v1/parcels/<drf_format_suffix:format>`
+- `api/v1/parcels//`
+- `api/v1/parcels//`
+- `api/v1/parcels//{pk>[//.]+)/`
+- `api/v1/parcels//{pk>[//.]+)/`
+- `api/v1/parcels//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/parcels//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/parcels//.{format>[a-z0-9]+)/?`
+- `api/v1/parcels//.{format>[a-z0-9]+)/?`
+- `api/v1/racks/`
+- `api/v1/racks/`
+- `api/v1/racks/<drf_format_suffix:format>`
+- `api/v1/racks/<drf_format_suffix:format>`
+- `api/v1/racks//`
+- `api/v1/racks//`
+- `api/v1/racks//{pk>[//.]+)/`
+- `api/v1/racks//{pk>[//.]+)/`
+- `api/v1/racks//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/racks//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/racks//.{format>[a-z0-9]+)/?`
+- `api/v1/racks//.{format>[a-z0-9]+)/?`
+- `api/v1/schema/`
+- `api/v1/schema/redoc/`
+- `api/v1/schema/swagger-ui/`
+- `api/v1/shelves/`
+- `api/v1/shelves/`
+- `api/v1/shelves/<drf_format_suffix:format>`
+- `api/v1/shelves/<drf_format_suffix:format>`
+- `api/v1/shelves//`
+- `api/v1/shelves//`
+- `api/v1/shelves//{pk>[//.]+)/`
+- `api/v1/shelves//{pk>[//.]+)/`
+- `api/v1/shelves//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/shelves//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/shelves//.{format>[a-z0-9]+)/?`
+- `api/v1/shelves//.{format>[a-z0-9]+)/?`
+- `api/v1/shipments/`
+- `api/v1/shipments/<drf_format_suffix:format>`
+- `api/v1/shipments//`
+- `api/v1/shipments//{pk>[//.]+)/`
+- `api/v1/shipments//{pk>[//.]+)/accept-cargo/`
+- `api/v1/shipments//{pk>[//.]+)/accept-cargo.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/assign-driver/`
+- `api/v1/shipments//{pk>[//.]+)/assign-driver.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/assign-truck/`
+- `api/v1/shipments//{pk>[//.]+)/assign-truck.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/cancel/`
+- `api/v1/shipments//{pk>[//.]+)/cancel.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/complete/`
+- `api/v1/shipments//{pk>[//.]+)/complete.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/dispatch/`
+- `api/v1/shipments//{pk>[//.]+)/dispatch.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/eta/`
+- `api/v1/shipments//{pk>[//.]+)/eta.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/mark-arrived/`
+- `api/v1/shipments//{pk>[//.]+)/mark-arrived.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/reserve-dock/`
+- `api/v1/shipments//{pk>[//.]+)/reserve-dock.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/start-transit/`
+- `api/v1/shipments//{pk>[//.]+)/start-transit.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/start-unloading/`
+- `api/v1/shipments//{pk>[//.]+)/start-unloading.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/timeline/`
+- `api/v1/shipments//{pk>[//.]+)/timeline.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+)/transitions/`
+- `api/v1/shipments//{pk>[//.]+)/transitions.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/shipments//.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//lots/`
+- `api/v1/shipments//lots/{pk>[//.]+)/`
+- `api/v1/shipments//lots/{pk>[//.]+)/submit-quote/`
+- `api/v1/shipments//lots/{pk>[//.]+)/submit-quote.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//lots/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/shipments//lots.{format>[a-z0-9]+)/?`
+- `api/v1/shipments//parcels/`
+- `api/v1/shipments//parcels/{pk>[//.]+)/`
+- `api/v1/shipments//parcels/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/shipments//parcels.{format>[a-z0-9]+)/?`
+- `api/v1/slotting/assign/`
+- `api/v1/slotting/manual-override/`
+- `api/v1/slotting/recommend/`
+- `api/v1/slotting/recommend/`
+- `api/v1/telemetry/`
+- `api/v1/telemetry/history/`
+- `api/v1/telemetry/latest/`
+- `api/v1/transit/live/`
+- `api/v1/transit/shipments/`
+- `api/v1/transit/trucks/`
+- `api/v1/trucks/`
+- `api/v1/trucks/<drf_format_suffix:format>`
+- `api/v1/trucks//`
+- `api/v1/trucks//{pk>[//.]+)/`
+- `api/v1/trucks//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/trucks//.{format>[a-z0-9]+)/?`
+- `api/v1/users/`
+- `api/v1/users/<drf_format_suffix:format>`
+- `api/v1/users//`
+- `api/v1/users//{pk>[//.]+)/`
+- `api/v1/users//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/users//.{format>[a-z0-9]+)/?`
+- `api/v1/warehouse-layout/`
+- `api/v1/warehouse-layout/`
+- `api/v1/warehouse-layout/init/`
+- `api/v1/warehouses/`
+- `api/v1/warehouses/<drf_format_suffix:format>`
+- `api/v1/warehouses//`
+- `api/v1/warehouses//{pk>[//.]+)/`
+- `api/v1/warehouses//{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/warehouses//.{format>[a-z0-9]+)/?`
+- `api/v1/warehouses//global-registry/`
+- `api/v1/warehouses//global-registry/{pk>[//.]+)/`
+- `api/v1/warehouses//global-registry/{pk>[//.]+).{format>[a-z0-9]+)/?`
+- `api/v1/warehouses//global-registry.{format>[a-z0-9]+)/?`

@@ -61,12 +61,20 @@ function CountdownTimer({ arrivedAt, freeTimeMin }: { arrivedAt: string | null; 
 }
 
 // ─── Mock data generators ────────────────────────────────────────
-function generateShiftForecast() {
-  return [];
+function generateShiftForecast(): any[] {
+  return [
+    { time: '08:00', volume: 12, isPeak: false },
+    { time: '09:00', volume: 18, isPeak: false },
+    { time: '10:00', volume: 25, isPeak: true },
+    { time: '11:00', volume: 14, isPeak: false },
+  ];
 }
 
-function generateChargebackHistory() {
-  return [];
+function generateChargebackHistory(): any[] {
+  return [
+    { id: 1, shipment: 'SHP-9988', penalty: 4500, truck: 'MH12-AB-1234', factory: 'Pune Hub', gateIn: '10:15 AM', gateOut: '02:30 PM', date: 'Oct 24' },
+    { id: 2, shipment: 'SHP-7766', penalty: 2000, truck: 'MH14-CD-5678', factory: 'Mumbai Plant', gateIn: '11:00 AM', gateOut: '01:45 PM', date: 'Oct 23' },
+  ];
 }
 
 export default function SLALedgerPage() {

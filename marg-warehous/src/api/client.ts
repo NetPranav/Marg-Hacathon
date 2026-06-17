@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 
-const API_BASE = '/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://marg-hacathon.onrender.com/api/v1';
 
 const client = axios.create({
   baseURL: API_BASE,

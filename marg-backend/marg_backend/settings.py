@@ -95,9 +95,12 @@ WSGI_APPLICATION = 'marg_backend.wsgi.application'
 ASGI_APPLICATION = 'marg_backend.asgi.application'
 
 # Database
-# Parses DATABASE_URL from environment
+# Hardcoded to SQLite3 per user request for Render
 DATABASES = {
-    'default': env.db('DATABASE_URL', default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}")
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation

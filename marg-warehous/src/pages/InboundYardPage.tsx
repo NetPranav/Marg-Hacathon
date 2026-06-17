@@ -408,7 +408,7 @@ export default function InboundYardPage() {
   
   const shipmentsList = Array.isArray(shipmentData?.data) ? shipmentData?.data : shipmentData?.data?.results || [];
   const activeShipments = shipmentsList.filter((s: any) => 
-    ['APPROACHING_DESTINATION', 'ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS', 'SLOTTING_IN_PROGRESS'].includes(s.status)
+    ['READY_FOR_DISPATCH', 'DISPATCHED', 'IN_TRANSIT', 'APPROACHING_DESTINATION', 'ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS', 'SLOTTING_IN_PROGRESS'].includes(s.status)
   );
 
   const statusCounts = {
@@ -638,8 +638,8 @@ export default function InboundYardPage() {
                     label={s.status.replace(/_/g, ' ')} 
                     size="small" 
                     sx={{ 
-                      bgcolor: s.status === 'WAITING_FOR_DOCK' ? alpha('#F59E0B', 0.1) : alpha('#3B82F6', 0.1),
-                      color: s.status === 'WAITING_FOR_DOCK' ? '#F59E0B' : '#3B82F6',
+                      bgcolor: !s.assigned_dock ? alpha('#F59E0B', 0.1) : alpha('#3B82F6', 0.1),
+                      color: !s.assigned_dock ? '#F59E0B' : '#3B82F6',
                       fontWeight: 700, fontSize: '0.65rem'
                     }} 
                   />
@@ -647,23 +647,16 @@ export default function InboundYardPage() {
                 <Typography variant="body2" sx={{ color: '#64748B', mb: 0.5 }}><strong>Truck:</strong> {s.truck_reg || 'N/A'}</Typography>
                 <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}><strong>Factory:</strong> {s.factory_name}</Typography>
 
-                {s.status === 'WAITING_FOR_DOCK' && (
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField 
-                      select 
-                      size="small" 
-                      fullWidth 
-                      label="Select Dock" 
-                      defaultValue=""
-                      onChange={(e) => reserveDockMut.mutate({ id: s.id, dockId: Number(e.target.value) })}
-                    >
-                      {docks.filter((d: any) => d.status === 'AVAILABLE').map((d: any) => (
-                        <MenuItem key={d.id} value={d.id}>Dock {d.dock_number}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
+                {s.assigned_dock ? (
+                  <Typography variant="body2" sx={{ color: '#22C55E', mb: 2, fontWeight: 700 }}>
+                    <strong>Assigned Dock:</strong> {s.assigned_dock.name}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" sx={{ color: '#F59E0B', mb: 2, fontWeight: 700 }}>
+                    <strong>Dock:</strong> Pending Assignment
+                  </Typography>
                 )}
-                {s.status === 'DOCK_ASSIGNED' && (
+                {s.assigned_dock && s.status === 'ARRIVED_AT_GATE' && (
                   <Button 
                     variant="contained" 
                     fullWidth 

@@ -27,6 +27,8 @@ const NextWarehousePage = lazy(() => import('@/pages/NextWarehousePage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 
+const DockAssignmentPage = lazy(() => import('@/pages/DockAssignmentPage'));
+
 const SlottingPage = lazy(() => import('@/pages/SlottingPage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -82,8 +84,7 @@ export default function App() {
         <Route path="warehouse-approvals" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><WarehouseApprovalsPage /></Suspense>} />
         
         {/* Dock Operations (Existing inbound-yard + new) */}
-        <Route path="dock-board" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><Typography sx={{ p: 4 }}>Dock Board (Under Construction)</Typography></Suspense>} />
-        <Route path="dock-reservations" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><Typography sx={{ p: 4 }}>Dock Reservations (Under Construction)</Typography></Suspense>} />
+        <Route path="dock-assignment" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><DockAssignmentPage /></Suspense>} />
 
         <Route path="gate-checkin" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><GateCheckInPage /></Suspense>} />
         <Route path="receiving-checklist" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ReceivingChecklistPage /></Suspense>} />

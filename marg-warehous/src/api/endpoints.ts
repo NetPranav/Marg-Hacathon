@@ -19,8 +19,11 @@ export const shipmentsApi = {
   eta: (id: number) => client.get(`/shipments/${id}/eta/`),
   markArrived: (id: number) => client.post(`/shipments/${id}/mark-arrived/`),
   reserveDock: (id: number, data: { dock_id: number }) => client.post(`/shipments/${id}/reserve-dock/`, data),
+  approveGateEntry: (id: number) => client.post(`/shipments/${id}/approve-gate/`),
   startUnloading: (id: number) => client.post(`/shipments/${id}/start-unloading/`),
   complete: (id: number) => client.post(`/shipments/${id}/complete/`),
+  approveWarehouse: (id: number) => client.post(`/shipments/${id}/approve-warehouse/`),
+  rejectWarehouse: (id: number) => client.post(`/shipments/${id}/reject-warehouse/`),
 };
 
 export const warehousesApi = {

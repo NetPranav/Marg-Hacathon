@@ -1,11 +1,50 @@
 import { Box, Typography, Card, CardContent, Grid, Chip, Button, Divider, alpha, LinearProgress } from '@mui/material';
 import { FactCheck, WarningAmber, LocalShipping, Scale, Inventory2, ReportProblem } from '@mui/icons-material';
 
+import { useEffect, useState } from 'react';
+import { shipmentsApi } from '../api/endpoints';
+
 const ORANGE = '#E8700A';
 
-const MOCK_REQUESTS: any[] = [];
-
 export default function WarehouseApprovalsPage() {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRequests = () => {
+    setLoading(true);
+    shipmentsApi.list()
+      .then(res => {
+        const allShipments = res.data.results || res.data || [];
+        setRequests(allShipments.filter((s: any) => s.status === 'DRAFT'));
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleApprove = async (id: number) => {
+    try {
+      await shipmentsApi.approveWarehouse(id);
+      fetchRequests();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to approve request');
+    }
+  };
+
+  const handleReject = async (id: number) => {
+    try {
+      await shipmentsApi.rejectWarehouse(id);
+      fetchRequests();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to reject request');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
@@ -18,14 +57,22 @@ export default function WarehouseApprovalsPage() {
       </Box>
 
       <Grid container spacing={3}>
-        {MOCK_REQUESTS.map((req) => (
+        {loading ? (
+          <Grid item xs={12}>
+            <Typography>Loading requests...</Typography>
+          </Grid>
+        ) : requests.length === 0 ? (
+          <Grid item xs={12}>
+            <Typography>No pending requests.</Typography>
+          </Grid>
+        ) : requests.map((req) => (
           <Grid item xs={12} md={6} key={req.id}>
             <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flex: 1, p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box>
-                    <Typography sx={{ fontWeight: 800, color: '#0F172A', fontSize: '1.1rem' }}>{req.factory}</Typography>
-                    <Typography variant="body2" sx={{ color: '#64748B', fontFamily: 'monospace' }}>Request: {req.id} • Ref: {req.shipmentId}</Typography>
+                    <Typography sx={{ fontWeight: 800, color: '#0F172A', fontSize: '1.1rem' }}>{req.factory_name || 'Unknown Factory'}</Typography>
+                    <Typography variant="body2" sx={{ color: '#64748B', fontFamily: 'monospace' }}>Request: {req.id} • Ref: {req.shipment_number}</Typography>
                   </Box>
                   <Chip 
                     label="Pending Review" 
@@ -36,7 +83,7 @@ export default function WarehouseApprovalsPage() {
 
                 <Box sx={{ p: 2, bgcolor: alpha('#F1F5F9', 0.5), borderRadius: 2, mb: 3 }}>
                   <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Requested ETA</Typography>
-                  <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{req.requestedEta}</Typography>
+                  <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{req.expected_arrival_time ? new Date(req.expected_arrival_time).toLocaleString() : 'Not Specified'}</Typography>
                 </Box>
 
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1.5 }}>Expected Workload</Typography>
@@ -46,7 +93,7 @@ export default function WarehouseApprovalsPage() {
                       <Inventory2 sx={{ color: '#94A3B8', fontSize: 18 }} />
                       <Box>
                         <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', lineHeight: 1 }}>Parcels</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.workload.parcels}</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>-</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -55,7 +102,7 @@ export default function WarehouseApprovalsPage() {
                       <LocalShipping sx={{ color: '#94A3B8', fontSize: 18 }} />
                       <Box>
                         <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', lineHeight: 1 }}>Volume</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.workload.volume}</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>-</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -64,22 +111,11 @@ export default function WarehouseApprovalsPage() {
                       <Scale sx={{ color: '#94A3B8', fontSize: 18 }} />
                       <Box>
                         <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', lineHeight: 1 }}>Weight</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.workload.weight}</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.total_weight_kg || 0} kg</Typography>
                       </Box>
                     </Box>
                   </Grid>
                 </Grid>
-
-                {req.specialHandling.length > 0 && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1 }}>Special Handling</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {req.specialHandling.map(sh => (
-                        <Chip key={sh} label={sh} size="small" icon={<WarningAmber fontSize="small"/>} sx={{ bgcolor: alpha('#EF4444', 0.1), color: '#EF4444', fontWeight: 600 }} />
-                      ))}
-                    </Box>
-                  </Box>
-                )}
 
                 <Divider sx={{ my: 2 }} />
 
@@ -87,29 +123,21 @@ export default function WarehouseApprovalsPage() {
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>Projected Warehouse Utilization</Typography>
-                    <Typography variant="caption" sx={{ color: req.impact.capacityAfter > 90 ? '#EF4444' : '#0F172A', fontWeight: 700 }}>{req.impact.capacityAfter}%</Typography>
+                    <Typography variant="caption" sx={{ color: '#0F172A', fontWeight: 700 }}>~75%</Typography>
                   </Box>
                   <LinearProgress 
                     variant="determinate" 
-                    value={req.impact.capacityAfter} 
+                    value={75} 
                     sx={{ 
                       height: 6, borderRadius: 3,
                       bgcolor: alpha('#94A3B8', 0.2),
-                      '& .MuiLinearProgress-bar': { bgcolor: req.impact.capacityAfter > 90 ? '#EF4444' : ORANGE }
+                      '& .MuiLinearProgress-bar': { bgcolor: ORANGE }
                     }} 
                   />
                 </Box>
-                
-                {req.impact.dockConflict && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.5, bgcolor: alpha('#F59E0B', 0.1), borderRadius: 2 }}>
-                    <ReportProblem sx={{ color: '#F59E0B', fontSize: 20 }} />
-                    <Typography variant="body2" sx={{ color: '#B45309', fontWeight: 600 }}>Dock conflict detected at requested ETA</Typography>
-                  </Box>
-                )}
-
               </CardContent>
               <CardContent sx={{ bgcolor: '#F8FAFC', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button variant="contained" sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
+                <Button onClick={() => handleApprove(req.id)} variant="contained" sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
                   Approve
                 </Button>
                 <Button variant="outlined" sx={{ color: '#0F172A', borderColor: '#CBD5E1', fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '160px' }}>
@@ -118,7 +146,7 @@ export default function WarehouseApprovalsPage() {
                 <Button variant="outlined" sx={{ color: '#F59E0B', borderColor: alpha('#F59E0B', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
                   Request Delay
                 </Button>
-                <Button variant="outlined" sx={{ color: '#EF4444', borderColor: alpha('#EF4444', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '100px' }}>
+                <Button onClick={() => handleReject(req.id)} variant="outlined" sx={{ color: '#EF4444', borderColor: alpha('#EF4444', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '100px' }}>
                   Reject
                 </Button>
               </CardContent>

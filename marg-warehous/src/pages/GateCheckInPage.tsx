@@ -29,7 +29,7 @@ export default function GateCheckInPage() {
   const handlePullRecords = () => {
     const found = shipments.find(s => 
       s.truck_reg?.toLowerCase() === vehicleId.toLowerCase() && 
-      (s.status === 'ARRIVED_AT_WAREHOUSE' || s.status === 'WAITING_FOR_DOCK')
+      s.status === 'ARRIVED_AT_GATE'
     );
     if (found) {
       setFoundShipment(found);
@@ -46,11 +46,22 @@ export default function GateCheckInPage() {
     setChecks(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleApprove = () => {
-    alert("Vehicle verified and approved! Proceed to Inbound Yard to assign a dock.");
-    setVehicleId('');
-    setFoundShipment(null);
-    setChecks({});
+  const handleApprove = async () => {
+    if (!foundShipment) return;
+    try {
+      await shipmentsApi.approveGateEntry(foundShipment.id);
+      alert("Vehicle verified and approved! The dock is now occupied. Proceed to Inbound Yard.");
+      setVehicleId('');
+      setFoundShipment(null);
+      setChecks({});
+      
+      // refresh list
+      const res = await shipmentsApi.list();
+      setShipments(Array.isArray(res.data) ? res.data : res.data.results || []);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to approve gate entry.');
+    }
   };
 
   return (

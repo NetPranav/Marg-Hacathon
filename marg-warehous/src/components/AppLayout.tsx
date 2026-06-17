@@ -38,8 +38,7 @@ const NAV_GROUPS = [
     title: 'Dock Operations',
     items: [
       { label: 'Inbound Yard', icon: <Radar />, path: '/inbound-yard' },
-      { label: 'Dock Board', icon: <Anchor />, path: '/dock-board' },
-      { label: 'Dock Reservations', icon: <BookOnline />, path: '/dock-reservations' },
+      { label: 'Dock Assignment', icon: <Anchor />, path: '/dock-assignment' },
     ]
   },
   {
@@ -157,10 +156,10 @@ export default function AppLayout() {
         {NAV_GROUPS.map((group, gIndex) => (
           <Box key={gIndex} sx={{ mb: group.title ? 1.5 : 0.5 }}>
             {group.title && (
-              <Typography sx={{ 
+              <Typography sx={{
                 px: 1.5, pb: 0.5, pt: 1,
-                fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8', 
-                textTransform: 'uppercase', letterSpacing: '0.05em' 
+                fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8',
+                textTransform: 'uppercase', letterSpacing: '0.05em'
               }}>
                 {group.title}
               </Typography>

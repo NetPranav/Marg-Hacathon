@@ -26,6 +26,16 @@ def broadcast_shipment_update(organization_id, shipment_data):
         'type': 'shipment_update',
         'data': shipment_data,
     })
+    # Also notify the driver if assigned
+    if shipment_data.get('assigned_driver'):
+        driver_id = shipment_data['assigned_driver']
+        # If it's a dict, get the id
+        if isinstance(driver_id, dict):
+            driver_id = driver_id.get('id')
+        _send_to_group(f"driver_{driver_id}", {
+            'type': 'shipment_update',
+            'data': shipment_data
+        })
     _send_to_group('admin_global', {
         'type': 'shipment_update',
         'data': shipment_data,

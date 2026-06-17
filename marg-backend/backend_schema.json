@@ -1,0 +1,2956 @@
+{
+  "schema": {
+    "daphne": {
+      "models": {}
+    },
+    "django_filters": {
+      "models": {}
+    },
+    "drf_spectacular": {
+      "models": {}
+    },
+    "django_celery_beat": {
+      "models": {
+        "SolarSchedule": {
+          "fields": [
+            {
+              "name": "periodictask",
+              "type": "ForeignKey",
+              "related_model": "PeriodicTask"
+            },
+            {
+              "name": "id",
+              "type": "AutoField"
+            },
+            {
+              "name": "event",
+              "type": "CharField"
+            },
+            {
+              "name": "latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "longitude",
+              "type": "DecimalField"
+            }
+          ]
+        },
+        "IntervalSchedule": {
+          "fields": [
+            {
+              "name": "periodictask",
+              "type": "ForeignKey",
+              "related_model": "PeriodicTask"
+            },
+            {
+              "name": "id",
+              "type": "AutoField"
+            },
+            {
+              "name": "every",
+              "type": "IntegerField"
+            },
+            {
+              "name": "period",
+              "type": "CharField"
+            }
+          ]
+        },
+        "ClockedSchedule": {
+          "fields": [
+            {
+              "name": "periodictask",
+              "type": "ForeignKey",
+              "related_model": "PeriodicTask"
+            },
+            {
+              "name": "id",
+              "type": "AutoField"
+            },
+            {
+              "name": "clocked_time",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "CrontabSchedule": {
+          "fields": [
+            {
+              "name": "periodictask",
+              "type": "ForeignKey",
+              "related_model": "PeriodicTask"
+            },
+            {
+              "name": "id",
+              "type": "AutoField"
+            },
+            {
+              "name": "minute",
+              "type": "CharField"
+            },
+            {
+              "name": "hour",
+              "type": "CharField"
+            },
+            {
+              "name": "day_of_month",
+              "type": "CharField"
+            },
+            {
+              "name": "month_of_year",
+              "type": "CharField"
+            },
+            {
+              "name": "day_of_week",
+              "type": "CharField"
+            },
+            {
+              "name": "timezone",
+              "type": "CharField"
+            }
+          ]
+        },
+        "PeriodicTasks": {
+          "fields": [
+            {
+              "name": "ident",
+              "type": "SmallIntegerField"
+            },
+            {
+              "name": "last_update",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "PeriodicTask": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "AutoField"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "task",
+              "type": "CharField"
+            },
+            {
+              "name": "interval",
+              "type": "ForeignKey",
+              "related_model": "IntervalSchedule"
+            },
+            {
+              "name": "crontab",
+              "type": "ForeignKey",
+              "related_model": "CrontabSchedule"
+            },
+            {
+              "name": "solar",
+              "type": "ForeignKey",
+              "related_model": "SolarSchedule"
+            },
+            {
+              "name": "clocked",
+              "type": "ForeignKey",
+              "related_model": "ClockedSchedule"
+            },
+            {
+              "name": "args",
+              "type": "TextField"
+            },
+            {
+              "name": "kwargs",
+              "type": "TextField"
+            },
+            {
+              "name": "queue",
+              "type": "CharField"
+            },
+            {
+              "name": "exchange",
+              "type": "CharField"
+            },
+            {
+              "name": "routing_key",
+              "type": "CharField"
+            },
+            {
+              "name": "headers",
+              "type": "TextField"
+            },
+            {
+              "name": "priority",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "expires",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "expire_seconds",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "one_off",
+              "type": "BooleanField"
+            },
+            {
+              "name": "start_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "enabled",
+              "type": "BooleanField"
+            },
+            {
+              "name": "last_run_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "total_run_count",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "date_changed",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "description",
+              "type": "TextField"
+            }
+          ]
+        }
+      }
+    },
+    "common": {
+      "models": {}
+    },
+    "accounts": {
+      "models": {
+        "User": {
+          "fields": [
+            {
+              "name": "logentry",
+              "type": "ForeignKey",
+              "related_model": "LogEntry"
+            },
+            {
+              "name": "outstandingtoken",
+              "type": "ForeignKey",
+              "related_model": "OutstandingToken"
+            },
+            {
+              "name": "created_factories",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "driver_profile",
+              "type": "OneToOneField",
+              "related_model": "Driver"
+            },
+            {
+              "name": "lot",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "created_shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "employee_profile",
+              "type": "OneToOneField",
+              "related_model": "EmployeeProfile"
+            },
+            {
+              "name": "shipment_events",
+              "type": "ForeignKey",
+              "related_model": "ShipmentEvent"
+            },
+            {
+              "name": "dock_reservations",
+              "type": "ForeignKey",
+              "related_model": "DockReservation"
+            },
+            {
+              "name": "verified_check_ins",
+              "type": "ForeignKey",
+              "related_model": "GateCheckIn"
+            },
+            {
+              "name": "reported_exceptions",
+              "type": "ForeignKey",
+              "related_model": "ExceptionReport"
+            },
+            {
+              "name": "chatmessage",
+              "type": "ForeignKey",
+              "related_model": "ChatMessage"
+            },
+            {
+              "name": "notifications",
+              "type": "ForeignKey",
+              "related_model": "Notification"
+            },
+            {
+              "name": "audit_logs",
+              "type": "ForeignKey",
+              "related_model": "AuditLog"
+            },
+            {
+              "name": "chat_threads",
+              "type": "ManyToManyField",
+              "related_model": "ChatThread"
+            },
+            {
+              "name": "chat_messages",
+              "type": "ForeignKey",
+              "related_model": "ChatMessage"
+            },
+            {
+              "name": "read_messages",
+              "type": "ManyToManyField",
+              "related_model": "ChatMessage"
+            },
+            {
+              "name": "posted_loads",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceLoad"
+            },
+            {
+              "name": "placed_bids",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceBid"
+            },
+            {
+              "name": "resolved_recommendations",
+              "type": "ForeignKey",
+              "related_model": "DockRecommendation"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "password",
+              "type": "CharField"
+            },
+            {
+              "name": "last_login",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "is_superuser",
+              "type": "BooleanField"
+            },
+            {
+              "name": "is_staff",
+              "type": "BooleanField"
+            },
+            {
+              "name": "is_active",
+              "type": "BooleanField"
+            },
+            {
+              "name": "date_joined",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "email",
+              "type": "CharField"
+            },
+            {
+              "name": "first_name",
+              "type": "CharField"
+            },
+            {
+              "name": "last_name",
+              "type": "CharField"
+            },
+            {
+              "name": "phone_number",
+              "type": "CharField"
+            },
+            {
+              "name": "role",
+              "type": "CharField"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "kyc_status",
+              "type": "CharField"
+            },
+            {
+              "name": "avatar",
+              "type": "FileField"
+            },
+            {
+              "name": "is_phone_verified",
+              "type": "BooleanField"
+            },
+            {
+              "name": "requires_password_change",
+              "type": "BooleanField"
+            },
+            {
+              "name": "groups",
+              "type": "ManyToManyField",
+              "related_model": "Group"
+            },
+            {
+              "name": "user_permissions",
+              "type": "ManyToManyField",
+              "related_model": "Permission"
+            }
+          ]
+        }
+      }
+    },
+    "organizations": {
+      "models": {
+        "Organization": {
+          "fields": [
+            {
+              "name": "members",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "factories",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "warehouses",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "drivers",
+              "type": "ForeignKey",
+              "related_model": "Driver"
+            },
+            {
+              "name": "trucks",
+              "type": "ForeignKey",
+              "related_model": "Truck"
+            },
+            {
+              "name": "handled_shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "employees",
+              "type": "ForeignKey",
+              "related_model": "EmployeeProfile"
+            },
+            {
+              "name": "audit_logs",
+              "type": "ForeignKey",
+              "related_model": "AuditLog"
+            },
+            {
+              "name": "locked_loads",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceLoad"
+            },
+            {
+              "name": "marketplace_bids",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceBid"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "address",
+              "type": "TextField"
+            },
+            {
+              "name": "city",
+              "type": "CharField"
+            },
+            {
+              "name": "state",
+              "type": "CharField"
+            },
+            {
+              "name": "country",
+              "type": "CharField"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "email",
+              "type": "CharField"
+            },
+            {
+              "name": "phone_number",
+              "type": "CharField"
+            },
+            {
+              "name": "gst_number",
+              "type": "CharField"
+            },
+            {
+              "name": "org_type",
+              "type": "CharField"
+            },
+            {
+              "name": "pan_number",
+              "type": "CharField"
+            },
+            {
+              "name": "company_type",
+              "type": "CharField"
+            },
+            {
+              "name": "logo",
+              "type": "FileField"
+            },
+            {
+              "name": "is_verified",
+              "type": "BooleanField"
+            },
+            {
+              "name": "metadata",
+              "type": "JSONField"
+            }
+          ]
+        }
+      }
+    },
+    "factories": {
+      "models": {
+        "Factory": {
+          "fields": [
+            {
+              "name": "lots",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "chat_rooms",
+              "type": "ForeignKey",
+              "related_model": "ChatRoom"
+            },
+            {
+              "name": "geofences",
+              "type": "ForeignKey",
+              "related_model": "Geofence"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "address",
+              "type": "TextField"
+            },
+            {
+              "name": "city",
+              "type": "CharField"
+            },
+            {
+              "name": "state",
+              "type": "CharField"
+            },
+            {
+              "name": "country",
+              "type": "CharField"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "longitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "created_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            }
+          ]
+        }
+      }
+    },
+    "warehouses": {
+      "models": {
+        "Warehouse": {
+          "fields": [
+            {
+              "name": "dock_bays",
+              "type": "ForeignKey",
+              "related_model": "DockBay"
+            },
+            {
+              "name": "racks",
+              "type": "ForeignKey",
+              "related_model": "Rack"
+            },
+            {
+              "name": "parcels",
+              "type": "ForeignKey",
+              "related_model": "Parcel"
+            },
+            {
+              "name": "incoming_lots",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "incoming_shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "geofences",
+              "type": "ForeignKey",
+              "related_model": "Geofence"
+            },
+            {
+              "name": "dock_recommendations",
+              "type": "ForeignKey",
+              "related_model": "DockRecommendation"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "address",
+              "type": "TextField"
+            },
+            {
+              "name": "city",
+              "type": "CharField"
+            },
+            {
+              "name": "state",
+              "type": "CharField"
+            },
+            {
+              "name": "country",
+              "type": "CharField"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "longitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "capacity",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "warehouse_type",
+              "type": "CharField"
+            },
+            {
+              "name": "operating_hours",
+              "type": "CharField"
+            },
+            {
+              "name": "special_handling",
+              "type": "JSONField"
+            },
+            {
+              "name": "max_concurrent_trucks",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "layout_width",
+              "type": "FloatField"
+            },
+            {
+              "name": "layout_depth",
+              "type": "FloatField"
+            },
+            {
+              "name": "layout_height",
+              "type": "FloatField"
+            },
+            {
+              "name": "width",
+              "type": "DecimalField"
+            },
+            {
+              "name": "depth",
+              "type": "DecimalField"
+            },
+            {
+              "name": "height",
+              "type": "DecimalField"
+            },
+            {
+              "name": "layout_version",
+              "type": "PositiveIntegerField"
+            }
+          ]
+        },
+        "DockBay": {
+          "fields": [
+            {
+              "name": "reservations",
+              "type": "ForeignKey",
+              "related_model": "DockReservation"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "dock_number",
+              "type": "CharField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "dock_type",
+              "type": "CharField"
+            },
+            {
+              "name": "x_position",
+              "type": "DecimalField"
+            },
+            {
+              "name": "z_position",
+              "type": "DecimalField"
+            }
+          ]
+        },
+        "Rack": {
+          "fields": [
+            {
+              "name": "shelves",
+              "type": "ForeignKey",
+              "related_model": "Shelf"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "rack_id",
+              "type": "CharField"
+            },
+            {
+              "name": "row_index",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "col_index",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "x_position",
+              "type": "DecimalField"
+            },
+            {
+              "name": "z_position",
+              "type": "DecimalField"
+            },
+            {
+              "name": "num_shelves",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "shelf_width",
+              "type": "DecimalField"
+            },
+            {
+              "name": "shelf_depth",
+              "type": "DecimalField"
+            },
+            {
+              "name": "shelf_height",
+              "type": "DecimalField"
+            }
+          ]
+        },
+        "Shelf": {
+          "fields": [
+            {
+              "name": "parcels",
+              "type": "ForeignKey",
+              "related_model": "Parcel"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "rack",
+              "type": "ForeignKey",
+              "related_model": "Rack"
+            },
+            {
+              "name": "level",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "available_volume",
+              "type": "DecimalField"
+            },
+            {
+              "name": "occupied_volume",
+              "type": "DecimalField"
+            },
+            {
+              "name": "max_weight",
+              "type": "DecimalField"
+            },
+            {
+              "name": "current_weight",
+              "type": "DecimalField"
+            },
+            {
+              "name": "is_locked",
+              "type": "BooleanField"
+            },
+            {
+              "name": "is_reserved",
+              "type": "BooleanField"
+            }
+          ]
+        },
+        "Parcel": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "parcel_id",
+              "type": "CharField"
+            },
+            {
+              "name": "warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "shelf",
+              "type": "ForeignKey",
+              "related_model": "Shelf"
+            },
+            {
+              "name": "height",
+              "type": "DecimalField"
+            },
+            {
+              "name": "width",
+              "type": "DecimalField"
+            },
+            {
+              "name": "depth",
+              "type": "DecimalField"
+            },
+            {
+              "name": "weight",
+              "type": "DecimalField"
+            },
+            {
+              "name": "color",
+              "type": "CharField"
+            },
+            {
+              "name": "destination",
+              "type": "CharField"
+            },
+            {
+              "name": "expected_dispatch_date",
+              "type": "DateField"
+            },
+            {
+              "name": "priority",
+              "type": "CharField"
+            },
+            {
+              "name": "special_handling",
+              "type": "TextField"
+            },
+            {
+              "name": "position_label",
+              "type": "CharField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            }
+          ]
+        }
+      }
+    },
+    "fleet": {
+      "models": {
+        "Driver": {
+          "fields": [
+            {
+              "name": "assigned_truck",
+              "type": "OneToOneField",
+              "related_model": "Truck"
+            },
+            {
+              "name": "shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "telemetry_points",
+              "type": "ForeignKey",
+              "related_model": "TelemetryPoint"
+            },
+            {
+              "name": "return_load_matches",
+              "type": "ForeignKey",
+              "related_model": "ReturnLoad"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "user",
+              "type": "OneToOneField",
+              "related_model": "User"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "license_number",
+              "type": "CharField"
+            },
+            {
+              "name": "employee_id",
+              "type": "CharField"
+            },
+            {
+              "name": "license_expiry",
+              "type": "DateField"
+            },
+            {
+              "name": "aadhaar_number",
+              "type": "CharField"
+            },
+            {
+              "name": "emergency_contact",
+              "type": "CharField"
+            },
+            {
+              "name": "is_available",
+              "type": "BooleanField"
+            },
+            {
+              "name": "license_image",
+              "type": "FileField"
+            },
+            {
+              "name": "profile_photo",
+              "type": "FileField"
+            },
+            {
+              "name": "vahan_verified",
+              "type": "BooleanField"
+            },
+            {
+              "name": "rating",
+              "type": "DecimalField"
+            },
+            {
+              "name": "total_trips",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "total_distance_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "fuel_efficiency_rating",
+              "type": "DecimalField"
+            }
+          ]
+        },
+        "Truck": {
+          "fields": [
+            {
+              "name": "shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "telemetry_points",
+              "type": "ForeignKey",
+              "related_model": "TelemetryPoint"
+            },
+            {
+              "name": "return_load_matches",
+              "type": "ForeignKey",
+              "related_model": "ReturnLoad"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "registration_number",
+              "type": "CharField"
+            },
+            {
+              "name": "vehicle_type",
+              "type": "CharField"
+            },
+            {
+              "name": "capacity_kg",
+              "type": "DecimalField"
+            },
+            {
+              "name": "volume_m3",
+              "type": "DecimalField"
+            },
+            {
+              "name": "manufacturing_year",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "assigned_driver",
+              "type": "OneToOneField",
+              "related_model": "Driver"
+            },
+            {
+              "name": "current_latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "current_longitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "last_telemetry_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "fuel_capacity_liters",
+              "type": "DecimalField"
+            },
+            {
+              "name": "next_service_date",
+              "type": "DateField"
+            },
+            {
+              "name": "insurance_expiry_date",
+              "type": "DateField"
+            },
+            {
+              "name": "fitness_cert_expiry_date",
+              "type": "DateField"
+            }
+          ]
+        }
+      }
+    },
+    "shipments": {
+      "models": {
+        "Lot": {
+          "fields": [
+            {
+              "name": "parcels",
+              "type": "ForeignKey",
+              "related_model": "LotParcel"
+            },
+            {
+              "name": "shipments",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "chat_rooms",
+              "type": "ForeignKey",
+              "related_model": "ChatRoom"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "lot_number",
+              "type": "CharField"
+            },
+            {
+              "name": "factory",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "destination_warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "assigned_logistics_company",
+              "type": "ForeignKey",
+              "related_model": "LogisticsCompany"
+            },
+            {
+              "name": "expected_dispatch_date",
+              "type": "DateField"
+            },
+            {
+              "name": "created_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            }
+          ]
+        },
+        "LotParcel": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "lot",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "parcel_id",
+              "type": "CharField"
+            },
+            {
+              "name": "length",
+              "type": "DecimalField"
+            },
+            {
+              "name": "width",
+              "type": "DecimalField"
+            },
+            {
+              "name": "height",
+              "type": "DecimalField"
+            },
+            {
+              "name": "weight",
+              "type": "DecimalField"
+            },
+            {
+              "name": "quantity",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "dispatch_priority",
+              "type": "CharField"
+            },
+            {
+              "name": "product_name",
+              "type": "CharField"
+            },
+            {
+              "name": "sku",
+              "type": "CharField"
+            },
+            {
+              "name": "batch_number",
+              "type": "CharField"
+            },
+            {
+              "name": "is_fragile",
+              "type": "BooleanField"
+            },
+            {
+              "name": "temperature_requirement",
+              "type": "CharField"
+            },
+            {
+              "name": "insurance_value",
+              "type": "DecimalField"
+            },
+            {
+              "name": "notes",
+              "type": "TextField"
+            }
+          ]
+        },
+        "Shipment": {
+          "fields": [
+            {
+              "name": "events",
+              "type": "ForeignKey",
+              "related_model": "ShipmentEvent"
+            },
+            {
+              "name": "dock_reservations",
+              "type": "ForeignKey",
+              "related_model": "DockReservation"
+            },
+            {
+              "name": "gate_check_in",
+              "type": "OneToOneField",
+              "related_model": "GateCheckIn"
+            },
+            {
+              "name": "exception_reports",
+              "type": "ForeignKey",
+              "related_model": "ExceptionReport"
+            },
+            {
+              "name": "notifications",
+              "type": "ForeignKey",
+              "related_model": "Notification"
+            },
+            {
+              "name": "chat_threads",
+              "type": "ForeignKey",
+              "related_model": "ChatThread"
+            },
+            {
+              "name": "marketplace_load",
+              "type": "OneToOneField",
+              "related_model": "MarketplaceLoad"
+            },
+            {
+              "name": "telemetry_points",
+              "type": "ForeignKey",
+              "related_model": "TelemetryPoint"
+            },
+            {
+              "name": "eta_predictions",
+              "type": "ForeignKey",
+              "related_model": "ETAPrediction"
+            },
+            {
+              "name": "return_load_opportunities",
+              "type": "ForeignKey",
+              "related_model": "ReturnLoad"
+            },
+            {
+              "name": "return_load_matches",
+              "type": "ForeignKey",
+              "related_model": "ReturnLoad"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment_number",
+              "type": "CharField"
+            },
+            {
+              "name": "factory",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "destination_warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "lot",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "assigned_truck",
+              "type": "ForeignKey",
+              "related_model": "Truck"
+            },
+            {
+              "name": "assigned_driver",
+              "type": "ForeignKey",
+              "related_model": "Driver"
+            },
+            {
+              "name": "shipment_type",
+              "type": "CharField"
+            },
+            {
+              "name": "priority",
+              "type": "CharField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "expected_dispatch_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "expected_arrival_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "actual_dispatch_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "actual_arrival_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "created_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "logistics_provider",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "total_distance_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "estimated_revenue",
+              "type": "DecimalField"
+            },
+            {
+              "name": "pod_submitted",
+              "type": "BooleanField"
+            },
+            {
+              "name": "is_verified",
+              "type": "BooleanField"
+            }
+          ]
+        }
+      }
+    },
+    "operations": {
+      "models": {
+        "EmployeeProfile": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "user",
+              "type": "OneToOneField",
+              "related_model": "User"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "department",
+              "type": "CharField"
+            },
+            {
+              "name": "operational_role",
+              "type": "CharField"
+            },
+            {
+              "name": "shift_type",
+              "type": "CharField"
+            }
+          ]
+        },
+        "ShipmentEvent": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "event_type",
+              "type": "CharField"
+            },
+            {
+              "name": "description",
+              "type": "TextField"
+            },
+            {
+              "name": "performed_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "metadata",
+              "type": "JSONField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "DockReservation": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "dock",
+              "type": "ForeignKey",
+              "related_model": "DockBay"
+            },
+            {
+              "name": "reserved_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "reserved_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "reservation_status",
+              "type": "CharField"
+            },
+            {
+              "name": "check_in_time",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "check_out_time",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "GateCheckIn": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment",
+              "type": "OneToOneField",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "verified_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "truck_number",
+              "type": "CharField"
+            },
+            {
+              "name": "driver_name",
+              "type": "CharField"
+            },
+            {
+              "name": "seal_number",
+              "type": "CharField"
+            },
+            {
+              "name": "documents_verified",
+              "type": "BooleanField"
+            },
+            {
+              "name": "notes",
+              "type": "TextField"
+            }
+          ]
+        },
+        "ExceptionReport": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "reported_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "exception_type",
+              "type": "CharField"
+            },
+            {
+              "name": "description",
+              "type": "TextField"
+            },
+            {
+              "name": "photo",
+              "type": "FileField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "resolution_notes",
+              "type": "TextField"
+            }
+          ]
+        }
+      }
+    },
+    "logistics": {
+      "models": {
+        "LogisticsCompany": {
+          "fields": [
+            {
+              "name": "assigned_lots",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            },
+            {
+              "name": "chat_rooms",
+              "type": "ForeignKey",
+              "related_model": "ChatRoom"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "contact_email",
+              "type": "CharField"
+            },
+            {
+              "name": "contact_phone",
+              "type": "CharField"
+            },
+            {
+              "name": "rating",
+              "type": "DecimalField"
+            },
+            {
+              "name": "fleet_size",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "coverage_regions",
+              "type": "JSONField"
+            },
+            {
+              "name": "average_response_time_mins",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "completed_jobs",
+              "type": "PositiveIntegerField"
+            }
+          ]
+        },
+        "ChatRoom": {
+          "fields": [
+            {
+              "name": "messages",
+              "type": "ForeignKey",
+              "related_model": "ChatMessage"
+            },
+            {
+              "name": "quotes",
+              "type": "ForeignKey",
+              "related_model": "LotQuote"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "factory",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "logistics_company",
+              "type": "ForeignKey",
+              "related_model": "LogisticsCompany"
+            },
+            {
+              "name": "lot",
+              "type": "ForeignKey",
+              "related_model": "Lot"
+            }
+          ]
+        },
+        "ChatMessage": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "room",
+              "type": "ForeignKey",
+              "related_model": "ChatRoom"
+            },
+            {
+              "name": "sender",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "is_from_logistics",
+              "type": "BooleanField"
+            },
+            {
+              "name": "text",
+              "type": "TextField"
+            },
+            {
+              "name": "attachment_url",
+              "type": "CharField"
+            },
+            {
+              "name": "read",
+              "type": "BooleanField"
+            }
+          ]
+        },
+        "LotQuote": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "room",
+              "type": "ForeignKey",
+              "related_model": "ChatRoom"
+            },
+            {
+              "name": "price",
+              "type": "DecimalField"
+            },
+            {
+              "name": "currency",
+              "type": "CharField"
+            },
+            {
+              "name": "estimated_delivery_hours",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "number_of_vehicles",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "special_conditions",
+              "type": "TextField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            }
+          ]
+        }
+      }
+    },
+    "notifications": {
+      "models": {
+        "Notification": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "recipient",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "title",
+              "type": "CharField"
+            },
+            {
+              "name": "message",
+              "type": "TextField"
+            },
+            {
+              "name": "notification_type",
+              "type": "CharField"
+            },
+            {
+              "name": "is_read",
+              "type": "BooleanField"
+            },
+            {
+              "name": "related_shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            }
+          ]
+        }
+      }
+    },
+    "audit": {
+      "models": {
+        "AuditLog": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "organization",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "actor",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "action",
+              "type": "CharField"
+            },
+            {
+              "name": "resource_type",
+              "type": "CharField"
+            },
+            {
+              "name": "resource_id",
+              "type": "PositiveIntegerField"
+            },
+            {
+              "name": "previous_state",
+              "type": "JSONField"
+            },
+            {
+              "name": "new_state",
+              "type": "JSONField"
+            },
+            {
+              "name": "ip_address",
+              "type": "GenericIPAddressField"
+            },
+            {
+              "name": "metadata",
+              "type": "JSONField"
+            },
+            {
+              "name": "timestamp",
+              "type": "DateTimeField"
+            }
+          ]
+        }
+      }
+    },
+    "chat": {
+      "models": {
+        "ChatThread": {
+          "fields": [
+            {
+              "name": "messages",
+              "type": "ForeignKey",
+              "related_model": "ChatMessage"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "load",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceLoad"
+            },
+            {
+              "name": "bid",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceBid"
+            },
+            {
+              "name": "is_active",
+              "type": "BooleanField"
+            },
+            {
+              "name": "last_message_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "participants",
+              "type": "ManyToManyField",
+              "related_model": "User"
+            }
+          ]
+        },
+        "ChatMessage": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "thread",
+              "type": "ForeignKey",
+              "related_model": "ChatThread"
+            },
+            {
+              "name": "sender",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "message_type",
+              "type": "CharField"
+            },
+            {
+              "name": "content",
+              "type": "TextField"
+            },
+            {
+              "name": "attachment",
+              "type": "FileField"
+            },
+            {
+              "name": "is_read",
+              "type": "BooleanField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "read_by",
+              "type": "ManyToManyField",
+              "related_model": "User"
+            }
+          ]
+        }
+      }
+    },
+    "marketplace": {
+      "models": {
+        "MarketplaceLoad": {
+          "fields": [
+            {
+              "name": "chat_threads",
+              "type": "ForeignKey",
+              "related_model": "ChatThread"
+            },
+            {
+              "name": "bids",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceBid"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "shipment",
+              "type": "OneToOneField",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "title",
+              "type": "CharField"
+            },
+            {
+              "name": "origin_name",
+              "type": "CharField"
+            },
+            {
+              "name": "destination_name",
+              "type": "CharField"
+            },
+            {
+              "name": "origin_lat",
+              "type": "DecimalField"
+            },
+            {
+              "name": "origin_lng",
+              "type": "DecimalField"
+            },
+            {
+              "name": "dest_lat",
+              "type": "DecimalField"
+            },
+            {
+              "name": "dest_lng",
+              "type": "DecimalField"
+            },
+            {
+              "name": "cargo_type",
+              "type": "CharField"
+            },
+            {
+              "name": "weight_kg",
+              "type": "DecimalField"
+            },
+            {
+              "name": "rate_per_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "total_distance_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "estimated_revenue",
+              "type": "DecimalField"
+            },
+            {
+              "name": "load_type",
+              "type": "CharField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "vehicle_type_required",
+              "type": "CharField"
+            },
+            {
+              "name": "locked_by",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "locked_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "expires_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "posted_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            }
+          ]
+        },
+        "MarketplaceBid": {
+          "fields": [
+            {
+              "name": "chat_threads",
+              "type": "ForeignKey",
+              "related_model": "ChatThread"
+            },
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "load",
+              "type": "ForeignKey",
+              "related_model": "MarketplaceLoad"
+            },
+            {
+              "name": "bidder",
+              "type": "ForeignKey",
+              "related_model": "Organization"
+            },
+            {
+              "name": "bid_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "bid_amount",
+              "type": "DecimalField"
+            },
+            {
+              "name": "notes",
+              "type": "TextField"
+            },
+            {
+              "name": "is_accepted",
+              "type": "BooleanField"
+            },
+            {
+              "name": "accepted_at",
+              "type": "DateTimeField"
+            }
+          ]
+        }
+      }
+    },
+    "telemetry": {
+      "models": {
+        "TelemetryPoint": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "driver",
+              "type": "ForeignKey",
+              "related_model": "Driver"
+            },
+            {
+              "name": "truck",
+              "type": "ForeignKey",
+              "related_model": "Truck"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "longitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "speed",
+              "type": "DecimalField"
+            },
+            {
+              "name": "heading",
+              "type": "DecimalField"
+            },
+            {
+              "name": "battery_level",
+              "type": "PositiveSmallIntegerField"
+            },
+            {
+              "name": "recorded_at",
+              "type": "DateTimeField"
+            }
+          ]
+        }
+      }
+    },
+    "geofencing": {
+      "models": {
+        "Geofence": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "name",
+              "type": "CharField"
+            },
+            {
+              "name": "warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "factory",
+              "type": "ForeignKey",
+              "related_model": "Factory"
+            },
+            {
+              "name": "latitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "longitude",
+              "type": "DecimalField"
+            },
+            {
+              "name": "radius_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "is_active",
+              "type": "BooleanField"
+            }
+          ]
+        }
+      }
+    },
+    "optimization": {
+      "models": {
+        "ETAPrediction": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "predicted_eta",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "confidence",
+              "type": "DecimalField"
+            },
+            {
+              "name": "delay_probability",
+              "type": "DecimalField"
+            },
+            {
+              "name": "remaining_distance_km",
+              "type": "DecimalField"
+            },
+            {
+              "name": "generated_at",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "DockRecommendation": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "warehouse",
+              "type": "ForeignKey",
+              "related_model": "Warehouse"
+            },
+            {
+              "name": "recommendation_type",
+              "type": "CharField"
+            },
+            {
+              "name": "affected_shipments",
+              "type": "JSONField"
+            },
+            {
+              "name": "reason",
+              "type": "TextField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            },
+            {
+              "name": "resolved_by",
+              "type": "ForeignKey",
+              "related_model": "User"
+            },
+            {
+              "name": "resolved_at",
+              "type": "DateTimeField"
+            }
+          ]
+        },
+        "ReturnLoad": {
+          "fields": [
+            {
+              "name": "id",
+              "type": "BigAutoField"
+            },
+            {
+              "name": "created_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "updated_at",
+              "type": "DateTimeField"
+            },
+            {
+              "name": "original_shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "return_shipment",
+              "type": "ForeignKey",
+              "related_model": "Shipment"
+            },
+            {
+              "name": "truck",
+              "type": "ForeignKey",
+              "related_model": "Truck"
+            },
+            {
+              "name": "driver",
+              "type": "ForeignKey",
+              "related_model": "Driver"
+            },
+            {
+              "name": "match_score",
+              "type": "DecimalField"
+            },
+            {
+              "name": "distance_to_pickup",
+              "type": "DecimalField"
+            },
+            {
+              "name": "estimated_revenue",
+              "type": "DecimalField"
+            },
+            {
+              "name": "status",
+              "type": "CharField"
+            }
+          ]
+        }
+      }
+    },
+    "realtime": {
+      "models": {}
+    }
+  },
+  "urls": [
+    "admin/",
+    "admin/login/",
+    "admin/logout/",
+    "admin/password_change/",
+    "admin/password_change/done/",
+    "admin/autocomplete/",
+    "admin/jsi18n/",
+    "admin/r/<int:content_type_id>/<path:object_id>/",
+    "admin/auth/group/",
+    "admin/auth/group/add/",
+    "admin/auth/group/<path:object_id>/history/",
+    "admin/auth/group/<path:object_id>/delete/",
+    "admin/auth/group/<path:object_id>/change/",
+    "admin/auth/group/<path:object_id>/",
+    "admin/token_blacklist/outstandingtoken/",
+    "admin/token_blacklist/outstandingtoken/add/",
+    "admin/token_blacklist/outstandingtoken/<path:object_id>/history/",
+    "admin/token_blacklist/outstandingtoken/<path:object_id>/delete/",
+    "admin/token_blacklist/outstandingtoken/<path:object_id>/change/",
+    "admin/token_blacklist/outstandingtoken/<path:object_id>/",
+    "admin/token_blacklist/blacklistedtoken/",
+    "admin/token_blacklist/blacklistedtoken/add/",
+    "admin/token_blacklist/blacklistedtoken/<path:object_id>/history/",
+    "admin/token_blacklist/blacklistedtoken/<path:object_id>/delete/",
+    "admin/token_blacklist/blacklistedtoken/<path:object_id>/change/",
+    "admin/token_blacklist/blacklistedtoken/<path:object_id>/",
+    "admin/django_celery_beat/periodictask/",
+    "admin/django_celery_beat/periodictask/add/",
+    "admin/django_celery_beat/periodictask/<path:object_id>/history/",
+    "admin/django_celery_beat/periodictask/<path:object_id>/delete/",
+    "admin/django_celery_beat/periodictask/<path:object_id>/change/",
+    "admin/django_celery_beat/periodictask/<path:object_id>/",
+    "admin/django_celery_beat/clockedschedule/",
+    "admin/django_celery_beat/clockedschedule/add/",
+    "admin/django_celery_beat/clockedschedule/<path:object_id>/history/",
+    "admin/django_celery_beat/clockedschedule/<path:object_id>/delete/",
+    "admin/django_celery_beat/clockedschedule/<path:object_id>/change/",
+    "admin/django_celery_beat/clockedschedule/<path:object_id>/",
+    "admin/django_celery_beat/crontabschedule/",
+    "admin/django_celery_beat/crontabschedule/add/",
+    "admin/django_celery_beat/crontabschedule/<path:object_id>/history/",
+    "admin/django_celery_beat/crontabschedule/<path:object_id>/delete/",
+    "admin/django_celery_beat/crontabschedule/<path:object_id>/change/",
+    "admin/django_celery_beat/crontabschedule/<path:object_id>/",
+    "admin/django_celery_beat/solarschedule/",
+    "admin/django_celery_beat/solarschedule/add/",
+    "admin/django_celery_beat/solarschedule/<path:object_id>/history/",
+    "admin/django_celery_beat/solarschedule/<path:object_id>/delete/",
+    "admin/django_celery_beat/solarschedule/<path:object_id>/change/",
+    "admin/django_celery_beat/solarschedule/<path:object_id>/",
+    "admin/django_celery_beat/intervalschedule/",
+    "admin/django_celery_beat/intervalschedule/add/",
+    "admin/django_celery_beat/intervalschedule/<path:object_id>/history/",
+    "admin/django_celery_beat/intervalschedule/<path:object_id>/delete/",
+    "admin/django_celery_beat/intervalschedule/<path:object_id>/change/",
+    "admin/django_celery_beat/intervalschedule/<path:object_id>/",
+    "admin/accounts/user/<id>/password/",
+    "admin/accounts/user/",
+    "admin/accounts/user/add/",
+    "admin/accounts/user/<path:object_id>/history/",
+    "admin/accounts/user/<path:object_id>/delete/",
+    "admin/accounts/user/<path:object_id>/change/",
+    "admin/accounts/user/<path:object_id>/",
+    "admin/organizations/organization/",
+    "admin/organizations/organization/add/",
+    "admin/organizations/organization/<path:object_id>/history/",
+    "admin/organizations/organization/<path:object_id>/delete/",
+    "admin/organizations/organization/<path:object_id>/change/",
+    "admin/organizations/organization/<path:object_id>/",
+    "admin/factories/factory/",
+    "admin/factories/factory/add/",
+    "admin/factories/factory/<path:object_id>/history/",
+    "admin/factories/factory/<path:object_id>/delete/",
+    "admin/factories/factory/<path:object_id>/change/",
+    "admin/factories/factory/<path:object_id>/",
+    "admin/warehouses/warehouse/",
+    "admin/warehouses/warehouse/add/",
+    "admin/warehouses/warehouse/<path:object_id>/history/",
+    "admin/warehouses/warehouse/<path:object_id>/delete/",
+    "admin/warehouses/warehouse/<path:object_id>/change/",
+    "admin/warehouses/warehouse/<path:object_id>/",
+    "admin/warehouses/dockbay/",
+    "admin/warehouses/dockbay/add/",
+    "admin/warehouses/dockbay/<path:object_id>/history/",
+    "admin/warehouses/dockbay/<path:object_id>/delete/",
+    "admin/warehouses/dockbay/<path:object_id>/change/",
+    "admin/warehouses/dockbay/<path:object_id>/",
+    "admin/warehouses/rack/",
+    "admin/warehouses/rack/add/",
+    "admin/warehouses/rack/<path:object_id>/history/",
+    "admin/warehouses/rack/<path:object_id>/delete/",
+    "admin/warehouses/rack/<path:object_id>/change/",
+    "admin/warehouses/rack/<path:object_id>/",
+    "admin/warehouses/shelf/",
+    "admin/warehouses/shelf/add/",
+    "admin/warehouses/shelf/<path:object_id>/history/",
+    "admin/warehouses/shelf/<path:object_id>/delete/",
+    "admin/warehouses/shelf/<path:object_id>/change/",
+    "admin/warehouses/shelf/<path:object_id>/",
+    "admin/warehouses/parcel/",
+    "admin/warehouses/parcel/add/",
+    "admin/warehouses/parcel/<path:object_id>/history/",
+    "admin/warehouses/parcel/<path:object_id>/delete/",
+    "admin/warehouses/parcel/<path:object_id>/change/",
+    "admin/warehouses/parcel/<path:object_id>/",
+    "admin/fleet/driver/",
+    "admin/fleet/driver/add/",
+    "admin/fleet/driver/<path:object_id>/history/",
+    "admin/fleet/driver/<path:object_id>/delete/",
+    "admin/fleet/driver/<path:object_id>/change/",
+    "admin/fleet/driver/<path:object_id>/",
+    "admin/fleet/truck/",
+    "admin/fleet/truck/add/",
+    "admin/fleet/truck/<path:object_id>/history/",
+    "admin/fleet/truck/<path:object_id>/delete/",
+    "admin/fleet/truck/<path:object_id>/change/",
+    "admin/fleet/truck/<path:object_id>/",
+    "admin/shipments/lot/",
+    "admin/shipments/lot/add/",
+    "admin/shipments/lot/<path:object_id>/history/",
+    "admin/shipments/lot/<path:object_id>/delete/",
+    "admin/shipments/lot/<path:object_id>/change/",
+    "admin/shipments/lot/<path:object_id>/",
+    "admin/shipments/lotparcel/",
+    "admin/shipments/lotparcel/add/",
+    "admin/shipments/lotparcel/<path:object_id>/history/",
+    "admin/shipments/lotparcel/<path:object_id>/delete/",
+    "admin/shipments/lotparcel/<path:object_id>/change/",
+    "admin/shipments/lotparcel/<path:object_id>/",
+    "admin/shipments/shipment/",
+    "admin/shipments/shipment/add/",
+    "admin/shipments/shipment/<path:object_id>/history/",
+    "admin/shipments/shipment/<path:object_id>/delete/",
+    "admin/shipments/shipment/<path:object_id>/change/",
+    "admin/shipments/shipment/<path:object_id>/",
+    "admin/operations/shipmentevent/",
+    "admin/operations/shipmentevent/add/",
+    "admin/operations/shipmentevent/<path:object_id>/history/",
+    "admin/operations/shipmentevent/<path:object_id>/delete/",
+    "admin/operations/shipmentevent/<path:object_id>/change/",
+    "admin/operations/shipmentevent/<path:object_id>/",
+    "admin/operations/dockreservation/",
+    "admin/operations/dockreservation/add/",
+    "admin/operations/dockreservation/<path:object_id>/history/",
+    "admin/operations/dockreservation/<path:object_id>/delete/",
+    "admin/operations/dockreservation/<path:object_id>/change/",
+    "admin/operations/dockreservation/<path:object_id>/",
+    "admin/logistics/logisticscompany/",
+    "admin/logistics/logisticscompany/add/",
+    "admin/logistics/logisticscompany/<path:object_id>/history/",
+    "admin/logistics/logisticscompany/<path:object_id>/delete/",
+    "admin/logistics/logisticscompany/<path:object_id>/change/",
+    "admin/logistics/logisticscompany/<path:object_id>/",
+    "admin/logistics/chatroom/",
+    "admin/logistics/chatroom/add/",
+    "admin/logistics/chatroom/<path:object_id>/history/",
+    "admin/logistics/chatroom/<path:object_id>/delete/",
+    "admin/logistics/chatroom/<path:object_id>/change/",
+    "admin/logistics/chatroom/<path:object_id>/",
+    "admin/logistics/chatmessage/",
+    "admin/logistics/chatmessage/add/",
+    "admin/logistics/chatmessage/<path:object_id>/history/",
+    "admin/logistics/chatmessage/<path:object_id>/delete/",
+    "admin/logistics/chatmessage/<path:object_id>/change/",
+    "admin/logistics/chatmessage/<path:object_id>/",
+    "admin/logistics/lotquote/",
+    "admin/logistics/lotquote/add/",
+    "admin/logistics/lotquote/<path:object_id>/history/",
+    "admin/logistics/lotquote/<path:object_id>/delete/",
+    "admin/logistics/lotquote/<path:object_id>/change/",
+    "admin/logistics/lotquote/<path:object_id>/",
+    "admin/notifications/notification/",
+    "admin/notifications/notification/add/",
+    "admin/notifications/notification/<path:object_id>/history/",
+    "admin/notifications/notification/<path:object_id>/delete/",
+    "admin/notifications/notification/<path:object_id>/change/",
+    "admin/notifications/notification/<path:object_id>/",
+    "admin/audit/auditlog/",
+    "admin/audit/auditlog/add/",
+    "admin/audit/auditlog/<path:object_id>/history/",
+    "admin/audit/auditlog/<path:object_id>/delete/",
+    "admin/audit/auditlog/<path:object_id>/change/",
+    "admin/audit/auditlog/<path:object_id>/",
+    "admin/telemetry/telemetrypoint/",
+    "admin/telemetry/telemetrypoint/add/",
+    "admin/telemetry/telemetrypoint/<path:object_id>/history/",
+    "admin/telemetry/telemetrypoint/<path:object_id>/delete/",
+    "admin/telemetry/telemetrypoint/<path:object_id>/change/",
+    "admin/telemetry/telemetrypoint/<path:object_id>/",
+    "admin/geofencing/geofence/",
+    "admin/geofencing/geofence/add/",
+    "admin/geofencing/geofence/<path:object_id>/history/",
+    "admin/geofencing/geofence/<path:object_id>/delete/",
+    "admin/geofencing/geofence/<path:object_id>/change/",
+    "admin/geofencing/geofence/<path:object_id>/",
+    "admin/optimization/etaprediction/",
+    "admin/optimization/etaprediction/add/",
+    "admin/optimization/etaprediction/<path:object_id>/history/",
+    "admin/optimization/etaprediction/<path:object_id>/delete/",
+    "admin/optimization/etaprediction/<path:object_id>/change/",
+    "admin/optimization/etaprediction/<path:object_id>/",
+    "admin/optimization/dockrecommendation/",
+    "admin/optimization/dockrecommendation/add/",
+    "admin/optimization/dockrecommendation/<path:object_id>/history/",
+    "admin/optimization/dockrecommendation/<path:object_id>/delete/",
+    "admin/optimization/dockrecommendation/<path:object_id>/change/",
+    "admin/optimization/dockrecommendation/<path:object_id>/",
+    "admin/optimization/returnload/",
+    "admin/optimization/returnload/add/",
+    "admin/optimization/returnload/<path:object_id>/history/",
+    "admin/optimization/returnload/<path:object_id>/delete/",
+    "admin/optimization/returnload/<path:object_id>/change/",
+    "admin/optimization/returnload/<path:object_id>/",
+    "admin/^(?P<app_label>auth|token_blacklist|django_celery_beat|accounts|organizations|factories|warehouses|fleet|shipments|operations|logistics|notifications|audit|telemetry|geofencing|optimization)/$",
+    "admin/(?P<url>.*)$",
+    "api/v1/auth/send-otp/",
+    "api/v1/auth/verify-otp/",
+    "api/v1/auth/register/",
+    "api/v1/auth/login/",
+    "api/v1/auth/refresh/",
+    "api/v1/auth/logout/",
+    "api/v1/auth/me/",
+    "api/v1/auth/register-warehouse/",
+    "api/v1/auth/register-factory/",
+    "api/v1/auth/register/logistics/",
+    "api/v1/auth/provision/",
+    "api/v1/auth/change-password/",
+    "api/v1/users/^$",
+    "api/v1/users/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/users/^(?P<pk>[^/.]+)/$",
+    "api/v1/users/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/users/",
+    "api/v1/users/<drf_format_suffix:format>",
+    "api/v1/organizations/^$",
+    "api/v1/organizations/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/organizations/^(?P<pk>[^/.]+)/$",
+    "api/v1/organizations/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/organizations/",
+    "api/v1/organizations/<drf_format_suffix:format>",
+    "api/v1/factories/^$",
+    "api/v1/factories/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/factories/^(?P<pk>[^/.]+)/$",
+    "api/v1/factories/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/factories/",
+    "api/v1/factories/<drf_format_suffix:format>",
+    "api/v1/warehouses/^global-registry/$",
+    "api/v1/warehouses/^global-registry\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/warehouses/^global-registry/(?P<pk>[^/.]+)/$",
+    "api/v1/warehouses/^global-registry/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/warehouses/^$",
+    "api/v1/warehouses/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/warehouses/^(?P<pk>[^/.]+)/$",
+    "api/v1/warehouses/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/warehouses/",
+    "api/v1/warehouses/<drf_format_suffix:format>",
+    "api/v1/docks/^$",
+    "api/v1/docks/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/docks/^(?P<pk>[^/.]+)/$",
+    "api/v1/docks/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/docks/",
+    "api/v1/docks/<drf_format_suffix:format>",
+    "api/v1/racks/^$",
+    "api/v1/racks/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/racks/^(?P<pk>[^/.]+)/$",
+    "api/v1/racks/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/racks/",
+    "api/v1/racks/<drf_format_suffix:format>",
+    "api/v1/shelves/^$",
+    "api/v1/shelves/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shelves/^(?P<pk>[^/.]+)/$",
+    "api/v1/shelves/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shelves/",
+    "api/v1/shelves/<drf_format_suffix:format>",
+    "api/v1/parcels/^$",
+    "api/v1/parcels/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/parcels/^(?P<pk>[^/.]+)/$",
+    "api/v1/parcels/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/parcels/",
+    "api/v1/parcels/<drf_format_suffix:format>",
+    "api/v1/trucks/^$",
+    "api/v1/trucks/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/trucks/^(?P<pk>[^/.]+)/$",
+    "api/v1/trucks/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/trucks/",
+    "api/v1/trucks/<drf_format_suffix:format>",
+    "api/v1/drivers/^$",
+    "api/v1/drivers/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/drivers/^(?P<pk>[^/.]+)/$",
+    "api/v1/drivers/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/drivers/",
+    "api/v1/drivers/<drf_format_suffix:format>",
+    "api/v1/shipments/^lots/$",
+    "api/v1/shipments/^lots\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^lots/(?P<pk>[^/.]+)/$",
+    "api/v1/shipments/^lots/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^lots/(?P<pk>[^/.]+)/submit-quote/$",
+    "api/v1/shipments/^lots/(?P<pk>[^/.]+)/submit-quote\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^parcels/$",
+    "api/v1/shipments/^parcels\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^parcels/(?P<pk>[^/.]+)/$",
+    "api/v1/shipments/^parcels/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^$",
+    "api/v1/shipments/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/accept-cargo/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/accept-cargo\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/assign-driver/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/assign-driver\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/assign-truck/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/assign-truck\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/cancel/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/cancel\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/complete/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/complete\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/dispatch/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/dispatch\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/eta/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/eta\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/mark-arrived/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/mark-arrived\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/reserve-dock/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/reserve-dock\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/start-transit/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/start-transit\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/start-unloading/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/start-unloading\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/timeline/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/timeline\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/transitions/$",
+    "api/v1/shipments/^(?P<pk>[^/.]+)/transitions\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shipments/",
+    "api/v1/shipments/<drf_format_suffix:format>",
+    "api/v1/notifications/^$",
+    "api/v1/notifications/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/notifications/^mark-all-read/$",
+    "api/v1/notifications/^mark-all-read\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/notifications/^unread-count/$",
+    "api/v1/notifications/^unread-count\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/notifications/^(?P<pk>[^/.]+)/$",
+    "api/v1/notifications/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/notifications/^(?P<pk>[^/.]+)/mark-read/$",
+    "api/v1/notifications/^(?P<pk>[^/.]+)/mark-read\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/notifications/",
+    "api/v1/notifications/<drf_format_suffix:format>",
+    "api/v1/audit-logs/^$",
+    "api/v1/audit-logs/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/audit-logs/^(?P<pk>[^/.]+)/$",
+    "api/v1/audit-logs/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/audit-logs/",
+    "api/v1/audit-logs/<drf_format_suffix:format>",
+    "api/v1/dashboard/factory/",
+    "api/v1/dashboard/warehouse/",
+    "api/v1/dashboard/driver/",
+    "api/v1/coordination/factory/",
+    "api/v1/coordination/warehouse/",
+    "api/v1/coordination/driver/",
+    "api/v1/coordination/<str:shipment_id>/arrive/",
+    "api/v1/coordination/<str:shipment_id>/check-in/",
+    "api/v1/coordination/<str:shipment_id>/exceptions/",
+    "api/v1/telemetry/",
+    "api/v1/telemetry/latest/",
+    "api/v1/telemetry/history/",
+    "api/v1/geofences/^$",
+    "api/v1/geofences/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/geofences/^(?P<pk>[^/.]+)/$",
+    "api/v1/geofences/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/geofences/",
+    "api/v1/geofences/<drf_format_suffix:format>",
+    "api/v1/^dock-recommendations/$",
+    "api/v1/^dock-recommendations\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)/$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)/approve/$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)/approve\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)/reject/$",
+    "api/v1/^dock-recommendations/(?P<pk>[^/.]+)/reject\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^return-loads/$",
+    "api/v1/^return-loads\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)/$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)/accept/$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)/accept\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)/decline/$",
+    "api/v1/^return-loads/(?P<pk>[^/.]+)/decline\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/",
+    "api/v1/<drf_format_suffix:format>",
+    "api/v1/racks/^$",
+    "api/v1/racks/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/racks/^(?P<pk>[^/.]+)/$",
+    "api/v1/racks/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/racks/",
+    "api/v1/racks/<drf_format_suffix:format>",
+    "api/v1/shelves/^$",
+    "api/v1/shelves/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shelves/^(?P<pk>[^/.]+)/$",
+    "api/v1/shelves/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/shelves/",
+    "api/v1/shelves/<drf_format_suffix:format>",
+    "api/v1/parcels/^$",
+    "api/v1/parcels/^\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/parcels/^(?P<pk>[^/.]+)/$",
+    "api/v1/parcels/^(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/parcels/",
+    "api/v1/parcels/<drf_format_suffix:format>",
+    "api/v1/warehouse-layout/",
+    "api/v1/slotting/recommend/",
+    "api/v1/slotting/assign/",
+    "api/v1/slotting/manual-override/",
+    "api/v1/warehouse-layout/",
+    "api/v1/warehouse-layout/init/",
+    "api/v1/slotting/recommend/",
+    "api/v1/logistics/^companies/$",
+    "api/v1/logistics/^companies\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^companies/(?P<pk>[^/.]+)/$",
+    "api/v1/logistics/^companies/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^chatrooms/$",
+    "api/v1/logistics/^chatrooms\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^chatrooms/(?P<pk>[^/.]+)/$",
+    "api/v1/logistics/^chatrooms/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^chatrooms/(?P<pk>[^/.]+)/mark-read/$",
+    "api/v1/logistics/^chatrooms/(?P<pk>[^/.]+)/mark-read\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^messages/$",
+    "api/v1/logistics/^messages\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^messages/(?P<pk>[^/.]+)/$",
+    "api/v1/logistics/^messages/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^quotes/$",
+    "api/v1/logistics/^quotes\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)/$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)/accept/$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)/accept\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)/reject/$",
+    "api/v1/logistics/^quotes/(?P<pk>[^/.]+)/reject\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/logistics/",
+    "api/v1/logistics/<drf_format_suffix:format>",
+    "api/v1/transit/live/",
+    "api/v1/transit/shipments/",
+    "api/v1/transit/trucks/",
+    "api/v1/chat/^chatrooms/$",
+    "api/v1/chat/^chatrooms\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^chatrooms/(?P<pk>[^/.]+)/$",
+    "api/v1/chat/^chatrooms/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^messages/$",
+    "api/v1/chat/^messages\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^messages/(?P<pk>[^/.]+)/$",
+    "api/v1/chat/^messages/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^quotes/$",
+    "api/v1/chat/^quotes\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^quotes/(?P<pk>[^/.]+)/$",
+    "api/v1/chat/^quotes/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/^quotes/(?P<pk>[^/.]+)/accept/$",
+    "api/v1/chat/^quotes/(?P<pk>[^/.]+)/accept\\.(?P<format>[a-z0-9]+)/?$",
+    "api/v1/chat/",
+    "api/v1/chat/<drf_format_suffix:format>",
+    "api/v1/health/",
+    "api/v1/schema/",
+    "api/v1/schema/swagger-ui/",
+    "api/v1/schema/redoc/",
+    "^static/(?P<path>.*)$",
+    "^media/(?P<path>.*)$"
+  ]
+}

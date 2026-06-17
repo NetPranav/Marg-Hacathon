@@ -16,7 +16,7 @@ class DriverSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'user', 'user_email', 'user_name', 'user_phone',
             'organization', 'organization_name',
-            'license_number', 'license_expiry',
+            'employee_id', 'license_number', 'license_expiry',
             'aadhaar_number', 'emergency_contact',
             'is_available', 'created_at', 'updated_at',
         )
@@ -32,7 +32,7 @@ class DriverListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Driver
-        fields = ('id', 'user', 'user_name', 'license_number', 'is_available', 'assigned_vehicle')
+        fields = ('id', 'user', 'user_name', 'employee_id', 'license_number', 'is_available', 'assigned_vehicle')
 
 
 class TruckSerializer(serializers.ModelSerializer):

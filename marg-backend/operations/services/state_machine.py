@@ -94,6 +94,16 @@ def transition_shipment(shipment, target_status: str) -> str:
     validate_transition(previous_status, target_status)
     shipment.status = target_status
     shipment.save(update_fields=['status', 'updated_at'])
+    
+    # Broadcast to realtime channels
+    try:
+        from realtime.broadcast import broadcast_shipment_update
+        from shipments.serializers import ShipmentSerializer
+        broadcast_shipment_update(shipment.factory.organization_id, ShipmentSerializer(shipment).data)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to broadcast shipment update: {e}")
+        
     return previous_status
 
 

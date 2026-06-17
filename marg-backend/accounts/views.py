@@ -439,6 +439,9 @@ class FactoryRegistrationView(APIView):
         postal_code = data.get('pincode', '')
         full_address = data.get('address', '')
 
+        if postal_code:
+            full_address = f"{full_address}, Pincode: {postal_code}".strip(", ")
+
         Factory.objects.create(
             organization=org,
             name=f"{company_name} Main Facility",
@@ -446,7 +449,6 @@ class FactoryRegistrationView(APIView):
             state=state,
             city=city,
             address=full_address,
-            postal_code=postal_code,
             created_by=user,
         )
 
@@ -602,11 +604,11 @@ class LogisticsRegistrationView(APIView):
             name=data['company_name'],
             email=email,
             phone_number=data['phone_number'],
+            address=data.get('company_address', ''),
+            gst_number=data.get('gst_number', ''),
             org_type=OrganizationType.LOGISTICS_PROVIDER,
             metadata={
                 "registration_number": data.get('registration_number'),
-                "gst_number": data.get('gst_number'),
-                "company_address": data.get('company_address'),
                 "coverage_regions": data.get('coverage_regions'),
                 "fleet_size": data.get('fleet_size'),
                 "vehicle_types": data.get('vehicle_types'),
@@ -704,6 +706,7 @@ class ProvisionUserView(APIView):
         if user.role == UserRole.DRIVER:
             from fleet.models import Driver
             license_number = request.data.get('license_number', 'PENDING')
+            employee_id = request.data.get('employee_id', '')
             
             if Driver.objects.filter(license_number=license_number).exists():
                 user.delete()
@@ -713,6 +716,7 @@ class ProvisionUserView(APIView):
                 user=user,
                 organization=org,
                 license_number=license_number,
+                employee_id=employee_id,
             )
         elif user.role in [
             UserRole.EMPLOYEE, UserRole.DISPATCH_MANAGER, 

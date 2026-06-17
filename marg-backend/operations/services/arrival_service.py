@@ -66,28 +66,46 @@ def mark_arrived(shipment, performed_by, ip_address=None):
         ip_address=ip_address,
     )
 
-    # Check if a dock reservation exists and auto-transition
+    return shipment
+
+
+def approve_gate_entry(shipment, performed_by, ip_address=None):
+    """
+    Approve a truck at the gate.
+    This officially checks the truck into the facility and occupies the assigned dock.
+    """
     active_reservation = DockReservation.objects.filter(
         shipment=shipment,
         reservation_status=ReservationStatus.ACTIVE,
     ).first()
 
-    if active_reservation:
-        # Update dock status to OCCUPIED
-        active_reservation.check_in_time = timezone.now()
-        active_reservation.save(update_fields=['check_in_time', 'updated_at'])
+    if not active_reservation:
+        raise ArrivalError("No active dock reservation found for this shipment. Please assign a dock first.")
 
-        dock = active_reservation.dock
-        dock.status = DockStatus.OCCUPIED
-        dock.save(update_fields=['status', 'updated_at'])
+    # Update dock status to OCCUPIED
+    active_reservation.check_in_time = timezone.now()
+    active_reservation.save(update_fields=['check_in_time', 'updated_at'])
 
-        ShipmentEvent.objects.create(
-            shipment=shipment,
-            event_type=ShipmentEventType.DOCK_ENTERED,
-            description=f'Truck checked into Dock {dock.dock_number}.',
-            performed_by=performed_by,
-            metadata={'dock_id': dock.id, 'dock_number': dock.dock_number},
-        )
+    dock = active_reservation.dock
+    dock.status = DockStatus.OCCUPIED
+    dock.save(update_fields=['status', 'updated_at'])
+
+    ShipmentEvent.objects.create(
+        shipment=shipment,
+        event_type=ShipmentEventType.DOCK_ENTERED,
+        description=f'Gate Check-in Approved. Truck checked into Dock {dock.dock_number}.',
+        performed_by=performed_by,
+        metadata={'dock_id': dock.id, 'dock_number': dock.dock_number},
+    )
+    
+    # Broadcast websocket update so dashboards see the OCCUPIED dock instantly
+    try:
+        from realtime.broadcast import broadcast_shipment_update
+        from shipments.serializers import ShipmentSerializer
+        broadcast_shipment_update(shipment.factory.organization_id, ShipmentSerializer(shipment).data)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to broadcast shipment update: {e}")
 
     return shipment
 

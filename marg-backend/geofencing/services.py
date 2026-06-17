@@ -5,8 +5,9 @@ No PostGIS required — works with any database backend.
 import math
 from decimal import Decimal
 
-from common.enums import ShipmentEventType, NotificationType
+from common.enums import ShipmentEventType, NotificationType, ShipmentStatus
 from operations.models import ShipmentEvent
+from operations.services.state_machine import transition_shipment
 from notifications.services import notify_warehouse_managers
 from .models import Geofence
 
@@ -105,3 +106,13 @@ def process_geofence_event(shipment, geofence, distance_km, performed_by):
             notification_type=NotificationType.GEOFENCE,
             shipment=shipment,
         )
+
+        # Automated Status Transition:
+        # If this is the destination warehouse and the shipment is IN_TRANSIT,
+        # transition it to APPROACHING_DESTINATION automatically.
+        if geofence.warehouse == shipment.destination_warehouse and shipment.status == ShipmentStatus.IN_TRANSIT:
+            try:
+                transition_shipment(shipment, ShipmentStatus.APPROACHING_DESTINATION)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to auto-transition shipment to APPROACHING_DESTINATION: {e}")

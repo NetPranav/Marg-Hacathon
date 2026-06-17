@@ -20,6 +20,7 @@ class Driver(TimestampMixin, models.Model):
         related_name='drivers',
     )
     license_number = models.CharField(max_length=50, unique=True)
+    employee_id = models.CharField(max_length=50, blank=True, default='')
     license_expiry = models.DateField(null=True, blank=True)
     aadhaar_number = models.CharField(
         max_length=12, blank=True, default='',

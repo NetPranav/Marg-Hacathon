@@ -24,6 +24,10 @@ def ready_for_dispatch(shipment, performed_by, ip_address=None):
     Called after truck, driver, and dock are all assigned.
     """
     previous_status = shipment.status
+
+    if shipment.status == ShipmentStatus.DRIVER_ASSIGNED:
+        transition_shipment(shipment, ShipmentStatus.READY_FOR_PICKUP)
+
     transition_shipment(shipment, ShipmentStatus.LOADING_IN_PROGRESS)
 
     ShipmentEvent.objects.create(
@@ -71,10 +75,10 @@ def dispatch_shipment(shipment, performed_by, ip_address=None):
     ShipmentEvent.objects.create(
         shipment=shipment,
         event_type=ShipmentEventType.DISPATCHED,
-        description=f'Shipment dispatched. Truck: {shipment.assigned_truck.registration_number}, Driver: {shipment.assigned_driver.user.full_name}.',
+        description=f'Loading completed and shipment marked ready for transit. Truck: {shipment.assigned_truck.registration_number}, Driver: {shipment.assigned_driver.user.full_name}.',
         performed_by=performed_by,
         metadata={
-            'dispatch_time': shipment.actual_dispatch_time.isoformat(),
+            'loading_complete_time': timezone.now().isoformat(),
             'truck': shipment.assigned_truck.registration_number,
             'driver': shipment.assigned_driver.user.full_name,
         },
@@ -112,7 +116,7 @@ def dispatch_shipment(shipment, performed_by, ip_address=None):
         resource_type='Shipment',
         resource_id=shipment.id,
         previous_state={'status': previous_status},
-        new_state={'status': shipment.status, 'actual_dispatch_time': shipment.actual_dispatch_time.isoformat()},
+        new_state={'status': shipment.status},
         ip_address=ip_address,
     )
 

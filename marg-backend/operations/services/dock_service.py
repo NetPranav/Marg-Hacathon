@@ -10,6 +10,8 @@ from operations.models import ShipmentEvent, DockReservation
 from operations.services.state_machine import transition_shipment
 from notifications.services import notify_warehouse_managers, notify_factory_managers
 from audit.services import log_action
+from realtime.broadcast import broadcast_shipment_update
+from shipments.serializers import ShipmentSerializer
 
 
 class DockReservationError(Exception):
@@ -38,6 +40,19 @@ def reserve_dock(shipment, dock, performed_by, ip_address=None):
             f'Dock {dock.dock_number} is not available. Current status: {dock.get_status_display()}.'
         )
 
+    # If the shipment already has an active reservation, release it first
+    existing_reservation = DockReservation.objects.filter(
+        shipment=shipment,
+        reservation_status=ReservationStatus.ACTIVE,
+    ).select_related('dock').first()
+
+    if existing_reservation:
+        if existing_reservation.dock == dock:
+            # Already reserved this exact dock
+            return shipment, existing_reservation
+        # Release the old dock
+        release_dock(shipment, performed_by, ip_address)
+
     # Validation: no active reservation for this dock
     active_reservations = DockReservation.objects.filter(
         dock=dock,
@@ -50,8 +65,8 @@ def reserve_dock(shipment, dock, performed_by, ip_address=None):
 
     previous_status = shipment.status
 
-    # Transition
-    transition_shipment(shipment, ShipmentStatus.DOCK_RESERVED)
+    # Transition is not needed here; reserving a dock doesn't change the overall shipment status
+    # (The shipment could be in IN_TRANSIT, APPROACHING_DESTINATION, etc)
 
     # Reserve the dock
     dock.status = DockStatus.RESERVED
@@ -107,41 +122,53 @@ def reserve_dock(shipment, dock, performed_by, ip_address=None):
         ip_address=ip_address,
     )
 
+    # Broadcast websocket update so driver apps immediately see the newly assigned dock
+    try:
+        broadcast_shipment_update(shipment.factory.organization_id, ShipmentSerializer(shipment).data)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to broadcast shipment update: {e}")
+
     return shipment, reservation
 
 
 def release_dock(shipment, performed_by, ip_address=None):
     """Release the reserved dock for a shipment."""
-    reservation = DockReservation.objects.filter(
+    reservations = DockReservation.objects.filter(
         shipment=shipment,
         reservation_status=ReservationStatus.ACTIVE,
-    ).select_related('dock').first()
+    ).select_related('dock')
 
-    if not reservation:
+    if not reservations.exists():
         raise DockReservationError('No active dock reservation found for this shipment.')
 
     previous_status = shipment.status
 
-    # Release dock
-    dock = reservation.dock
-    dock.status = DockStatus.AVAILABLE
-    dock.save(update_fields=['status', 'updated_at'])
+    for reservation in reservations:
+        # Release dock
+        dock = reservation.dock
+        dock.status = DockStatus.AVAILABLE
+        dock.save(update_fields=['status', 'updated_at'])
 
-    # Cancel reservation
-    reservation.reservation_status = ReservationStatus.CANCELLED
-    reservation.save(update_fields=['reservation_status', 'updated_at'])
+        # Cancel reservation
+        reservation.reservation_status = ReservationStatus.CANCELLED
+        reservation.save(update_fields=['reservation_status', 'updated_at'])
 
-    # Transition back
-    transition_shipment(shipment, ShipmentStatus.DRIVER_ASSIGNED)
+        log_action(
+            actor=performed_by,
+            action=AuditAction.DOCK_RELEASED,
+            resource_type='DockReservation',
+            resource_id=reservation.id,
+            previous_state={'status': previous_status},
+            new_state={'status': shipment.status},
+            ip_address=ip_address,
+        )
 
-    log_action(
-        actor=performed_by,
-        action=AuditAction.DOCK_RELEASED,
-        resource_type='DockReservation',
-        resource_id=reservation.id,
-        previous_state={'status': previous_status},
-        new_state={'status': shipment.status},
-        ip_address=ip_address,
-    )
+    # Broadcast websocket update
+    try:
+        broadcast_shipment_update(shipment.factory.organization_id, ShipmentSerializer(shipment).data)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to broadcast shipment update: {e}")
 
     return shipment

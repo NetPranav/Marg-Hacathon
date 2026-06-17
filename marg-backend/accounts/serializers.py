@@ -99,8 +99,21 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 # ─── Auth Serializers ───────────────────────────────────────────────────────
 
+class OrganizationMiniSerializer(serializers.ModelSerializer):
+    factories = serializers.SerializerMethodField()
+
+    class Meta:
+        from organizations.models import Organization
+        model = Organization
+        fields = ('id', 'name', 'factories')
+
+    def get_factories(self, obj):
+        return [{"id": f.id, "name": f.name} for f in obj.factories.all()]
+
+
 class AuthUserSerializer(serializers.ModelSerializer):
     """Serializer for the /auth/me/ endpoint — includes org details, KYC, and permissions."""
+    organization = OrganizationMiniSerializer(read_only=True)
     organization_name = serializers.CharField(
         source='organization.name', read_only=True, default=None
     )

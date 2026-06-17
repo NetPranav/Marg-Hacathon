@@ -25,7 +25,7 @@ from operations.services.dispatch_service import (
     dispatch_shipment, ready_for_dispatch, DispatchError,
 )
 from operations.services.arrival_service import (
-    mark_arrived, start_unloading, complete_shipment, cancel_shipment, ArrivalError,
+    mark_arrived, approve_gate_entry, start_unloading, complete_shipment, cancel_shipment, ArrivalError,
 )
 
 from .models import Shipment
@@ -221,15 +221,71 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             'data': ShipmentSerializer(shipment).data,
         })
 
+    @extend_schema(tags=['Shipment Operations'], summary='Approve warehouse request')
+    @action(detail=True, methods=['post'], url_path='approve-warehouse')
+    def approve_warehouse(self, request, pk=None):
+        shipment = self.get_object()
+
+        try:
+            transition_shipment(shipment, ShipmentStatus.WAREHOUSE_APPROVED)
+            send_system_chat_message(shipment, "Warehouse request approved.")
+        except InvalidTransitionError as e:
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({
+            'success': True,
+            'message': 'Warehouse request approved successfully.',
+            'data': ShipmentSerializer(shipment).data,
+        })
+
+    @extend_schema(tags=['Shipment Operations'], summary='Reject warehouse request')
+    @action(detail=True, methods=['post'], url_path='reject-warehouse')
+    def reject_warehouse(self, request, pk=None):
+        shipment = self.get_object()
+
+        try:
+            transition_shipment(shipment, ShipmentStatus.CANCELLED)
+            send_system_chat_message(shipment, "Warehouse request rejected.")
+        except InvalidTransitionError as e:
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({
+            'success': True,
+            'message': 'Warehouse request rejected.',
+            'data': ShipmentSerializer(shipment).data,
+        })
+
+    @extend_schema(tags=['Shipment Operations'], summary='Mark loading as complete')
+    @action(detail=True, methods=['post'], url_path='mark-loading-complete')
+    def mark_loading_complete_action(self, request, pk=None):
+        shipment = self.get_object()
+
+        try:
+            ready_for_dispatch(shipment, request.user, ip_address=get_client_ip(request))
+        except (DispatchError, InvalidTransitionError) as e:
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({
+            'success': True,
+            'message': 'Loading marked as complete.',
+            'data': ShipmentSerializer(shipment).data,
+        })
+
     @extend_schema(tags=['Shipment Operations'], summary='Dispatch a shipment')
     @action(detail=True, methods=['post'], url_path='dispatch')
     def dispatch_action(self, request, pk=None):
         shipment = self.get_object()
 
         try:
-            # Auto-transition through READY_FOR_DISPATCH if currently at DOCK_RESERVED or DRIVER_ASSIGNED
-            if shipment.status in [ShipmentStatus.DOCK_RESERVED, ShipmentStatus.DRIVER_ASSIGNED]:
-                ready_for_dispatch(shipment, request.user, ip_address=get_client_ip(request))
 
             dispatch_shipment(shipment, request.user, ip_address=get_client_ip(request))
         except (DispatchError, InvalidTransitionError) as e:
@@ -260,6 +316,25 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         return Response({
             'success': True,
             'message': 'Arrival recorded successfully.',
+            'data': ShipmentSerializer(shipment).data,
+        })
+
+    @extend_schema(tags=['Shipment Operations'], summary='Approve gate entry')
+    @action(detail=True, methods=['post'], url_path='approve-gate')
+    def approve_gate_action(self, request, pk=None):
+        shipment = self.get_object()
+
+        try:
+            approve_gate_entry(shipment, request.user, ip_address=get_client_ip(request))
+        except ArrivalError as e:
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({
+            'success': True,
+            'message': 'Gate entry approved. Dock is now occupied.',
             'data': ShipmentSerializer(shipment).data,
         })
 
@@ -308,8 +383,16 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
 
         try:
-            # Transition from READY_FOR_TRANSIT to IN_TRANSIT
-            transition_shipment(shipment, ShipmentStatus.IN_TRANSIT)
+            from operations.services.state_machine import transition_shipment
+            # Fast-forward through intermediate states if needed
+            if shipment.status == ShipmentStatus.DRIVER_ASSIGNED:
+                transition_shipment(shipment, ShipmentStatus.READY_FOR_PICKUP)
+            if shipment.status == ShipmentStatus.READY_FOR_PICKUP:
+                transition_shipment(shipment, ShipmentStatus.LOADING_IN_PROGRESS)
+            if shipment.status == ShipmentStatus.LOADING_IN_PROGRESS:
+                transition_shipment(shipment, ShipmentStatus.READY_FOR_TRANSIT)
+            if shipment.status == ShipmentStatus.READY_FOR_TRANSIT:
+                transition_shipment(shipment, ShipmentStatus.IN_TRANSIT)
             
             # Record transit start time if we want to use actual_dispatch_time
             from django.utils import timezone

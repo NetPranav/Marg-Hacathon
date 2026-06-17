@@ -4,7 +4,13 @@ from .models import Shipment
 
 class ShipmentSerializer(serializers.ModelSerializer):
     """Full detail serializer for Shipment."""
-    factory_name = serializers.CharField(source='factory.name', read_only=True)
+    factory_name = serializers.SerializerMethodField()
+
+    def get_factory_name(self, obj):
+        fac = obj.factory
+        if fac:
+            return f"{fac.name} ({fac.city})" if fac.city else fac.name
+        return None
     warehouse_name = serializers.SerializerMethodField()
 
     def get_warehouse_name(self, obj):
@@ -18,6 +24,14 @@ class ShipmentSerializer(serializers.ModelSerializer):
     driver_name = serializers.CharField(
         source='assigned_driver.user.full_name', read_only=True, default=None
     )
+    assigned_dock = serializers.SerializerMethodField()
+
+    def get_assigned_dock(self, obj):
+        from operations.models import DockReservation
+        res = DockReservation.objects.filter(shipment=obj, reservation_status__in=['ACTIVE', 'UPCOMING']).first()
+        if res and res.dock:
+            return {'id': res.dock.id, 'name': res.dock.dock_number}
+        return None
     created_by_name = serializers.CharField(
         source='created_by.full_name', read_only=True, default=None
     )
@@ -34,7 +48,7 @@ class ShipmentSerializer(serializers.ModelSerializer):
             'expected_dispatch_time', 'expected_arrival_time',
             'actual_dispatch_time', 'actual_arrival_time',
             'created_by', 'created_by_name',
-            'created_at', 'updated_at',
+            'created_at', 'updated_at', 'assigned_dock'
         )
         read_only_fields = (
             'id', 'shipment_number', 'created_by', 'created_at', 'updated_at',
@@ -43,7 +57,13 @@ class ShipmentSerializer(serializers.ModelSerializer):
 
 class ShipmentListSerializer(serializers.ModelSerializer):
     """Lightweight list serializer for Shipment tables."""
-    factory_name = serializers.CharField(source='factory.name', read_only=True)
+    factory_name = serializers.SerializerMethodField()
+
+    def get_factory_name(self, obj):
+        fac = obj.factory
+        if fac:
+            return f"{fac.name} ({fac.city})" if fac.city else fac.name
+        return None
     warehouse_name = serializers.SerializerMethodField()
     truck_reg = serializers.CharField(source='assigned_truck.registration_number', read_only=True, default=None)
     driver_name = serializers.CharField(source='assigned_driver.user.full_name', read_only=True, default=None)
@@ -63,6 +83,14 @@ class ShipmentListSerializer(serializers.ModelSerializer):
     estimated_revenue = serializers.SerializerMethodField()
     total_weight_kg = serializers.SerializerMethodField()
     eta = serializers.SerializerMethodField()
+    assigned_dock = serializers.SerializerMethodField()
+
+    def get_assigned_dock(self, obj):
+        from operations.models import DockReservation
+        res = DockReservation.objects.filter(shipment=obj, reservation_status__in=['ACTIVE', 'UPCOMING']).first()
+        if res and res.dock:
+            return {'id': res.dock.id, 'name': res.dock.dock_number}
+        return None
 
     def get_estimated_revenue(self, obj):
         if hasattr(obj, 'lot') and obj.lot:
@@ -96,7 +124,8 @@ class ShipmentListSerializer(serializers.ModelSerializer):
             'expected_arrival_time', 'created_at', 'total_distance_km',
             'truck_reg', 'driver_name', 'driver_phone',
             'estimated_revenue', 'total_weight_kg', 'eta',
-            'origin_lat', 'origin_lng', 'dest_lat', 'dest_lng'
+            'origin_lat', 'origin_lng', 'dest_lat', 'dest_lng',
+            'assigned_dock'
         )
 
 
@@ -125,7 +154,13 @@ class LotParcelSerializer(serializers.ModelSerializer):
 
 class LotSerializer(serializers.ModelSerializer):
     parcels = LotParcelSerializer(many=True, read_only=True)
-    factory_name = serializers.CharField(source='factory.name', read_only=True)
+    factory_name = serializers.SerializerMethodField()
+
+    def get_factory_name(self, obj):
+        fac = obj.factory
+        if fac:
+            return f"{fac.name} ({fac.city})" if fac.city else fac.name
+        return None
     destination_name = serializers.SerializerMethodField()
     assigned_logistics_name = serializers.CharField(source='assigned_logistics_company.name', read_only=True, default=None)
     total_weight = serializers.SerializerMethodField()

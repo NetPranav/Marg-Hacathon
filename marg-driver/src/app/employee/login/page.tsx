@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
 export default function EmployeeLoginPage() {
   const [email, setEmail] = useState('');
@@ -19,7 +20,9 @@ export default function EmployeeLoginPage() {
     setError('');
 
     try {
-      await login(email, password);
+      const response = await api.post('/auth/login/', { email, password });
+      const { access, refresh, user } = response.data;
+      login(access, refresh, user);
       // Middleware will handle redirection based on token role
       router.push('/ops/dashboard');
     } catch (err: any) {

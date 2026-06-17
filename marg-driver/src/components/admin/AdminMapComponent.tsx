@@ -8,7 +8,9 @@ import api from "@/lib/api";
 import L from "leaflet";
 
 // Fix for default marker icons
+// @ts-ignore
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+// @ts-ignore
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -19,6 +21,7 @@ L.Icon.Default.mergeOptions({
 const centerPos: [number, number] = [21.0, 74.5]; 
 
 const createDotIcon = (color: string, size: number = 20) => {
+  // @ts-ignore
   return L.divIcon({
     className: "custom-dot-icon",
     html: `<div style="width: ${size}px; height: ${size}px; background-color: ${color}; border: 4px solid white; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"></div>`,

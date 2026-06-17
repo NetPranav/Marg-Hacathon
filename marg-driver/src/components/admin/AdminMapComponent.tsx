@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from "react-
 import { Crosshair, Navigation } from "lucide-react";
 import { useRealtimeStore } from "@/store/realtimeStore";
 import api from "@/lib/api";
+import L from "leaflet";
 
 // Fix for default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;

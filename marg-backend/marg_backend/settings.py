@@ -152,6 +152,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
     'http://127.0.0.1:3002',
+    'https://margfactory.vercel.app',
+    'https://marg-warehouse-theta.vercel.app',
+    'https://marg-shipment.vercel.app',
+    'https://marg-driver.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
 

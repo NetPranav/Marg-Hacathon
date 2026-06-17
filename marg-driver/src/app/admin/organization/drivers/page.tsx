@@ -82,8 +82,9 @@ export default function DriverAccountsPage() {
       setShowForm(false);
       setForm({ first_name: "", last_name: "", phone: "", employee_id: "", license_number: "" });
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Create driver error:", err);
+      alert("Failed to create driver: " + JSON.stringify(err.response?.data || err.message));
     } finally {
       setSaving(false);
     }

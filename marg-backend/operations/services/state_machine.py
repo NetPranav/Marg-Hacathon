@@ -35,6 +35,15 @@ TRANSITION_MAP = {
         ShipmentStatus.CANCELLED,
     },
     ShipmentStatus.READY_FOR_TRANSIT: {
+        ShipmentStatus.DOCK_REQUESTED,
+        ShipmentStatus.CANCELLED,
+    },
+    ShipmentStatus.DOCK_REQUESTED: {
+        ShipmentStatus.DOCK_APPROVED,
+        ShipmentStatus.READY_FOR_TRANSIT,
+        ShipmentStatus.CANCELLED,
+    },
+    ShipmentStatus.DOCK_APPROVED: {
         ShipmentStatus.IN_TRANSIT,
         ShipmentStatus.CANCELLED,
     },

@@ -39,43 +39,10 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'Dispatch Planning',
+    title: 'Operations',
     items: [
-      { label: 'Lots', icon: <Assignment />, path: '/lots' },
-      { label: 'Verification Queue', icon: <FactCheck />, path: '/verification-queue' },
-      { label: 'Draft Shipments', icon: <Inventory2 />, path: '/draft-shipments' },
-      { label: 'Dispatch Calendar', icon: <CalendarMonth />, path: '/dispatch-calendar' },
-    ],
-  },
-  {
-    title: 'Warehouse Coordination',
-    items: [
-      { label: 'Warehouse Requests', icon: <Warehouse />, path: '/warehouse-requests' },
-      { label: 'Pending Approvals', icon: <HourglassTop />, path: '/pending-approvals' },
-    ],
-  },
-  {
-    title: 'Logistics Coordination',
-    items: [
-      { label: 'Logistics Partners', icon: <Storefront />, path: '/logistics' },
-      { label: 'Conversations', icon: <Forum />, path: '/conversations' },
-      { label: 'Quotations', icon: <RequestQuote />, path: '/quotations' },
-    ],
-  },
-  {
-    title: 'Dispatch Execution',
-    items: [
-      { label: 'Shipment Readiness', icon: <AssignmentTurnedIn />, path: '/shipment-readiness' },
-      { label: 'Exceptions', icon: <Warning />, path: '/exceptions' },
-    ],
-  },
-  {
-    title: 'Shipment Operations',
-    items: [
+      { label: 'Active Lots', icon: <Assignment />, path: '/lots' },
       { label: 'Active Shipments', icon: <LocalShipping />, path: '/shipments' },
-      { label: 'Live Tracking', icon: <Map />, path: '/tracking' },
-      { label: 'Completed Shipments', icon: <DoneAll />, path: '/completed-shipments' },
-      { label: 'Lot Traceability', icon: <TrackChanges />, path: '/lot-traceability' },
     ],
   },
   {
@@ -83,6 +50,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Performance Reports', icon: <BarChart />, path: '/analytics' },
       { label: 'Historical Shipments', icon: <History />, path: '/historical-shipments' },
+      { label: 'Completed Shipments', icon: <DoneAll />, path: '/completed-shipments' },
     ],
   },
   {

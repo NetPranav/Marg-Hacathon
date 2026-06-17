@@ -19,6 +19,7 @@ import LogisticsDirectoryPage from '@/pages/LogisticsDirectoryPage';
 import LogisticsChatPage from '@/pages/LogisticsChatPage';
 import LotsPage from '@/pages/LotsPage';
 import CreateLotPage from '@/pages/CreateLotPage';
+import LotWorkflowPage from '@/pages/LotWorkflowPage';
 
 // New workflow pages
 import VerificationQueuePage from '@/pages/VerificationQueuePage';
@@ -68,6 +69,7 @@ export default function App() {
               {/* Dispatch Planning */}
               <Route path="lots" element={<LotsPage />} />
               <Route path="lots/new" element={<CreateLotPage />} />
+              <Route path="lots/:id/workflow" element={<LotWorkflowPage />} />
               <Route path="verification-queue" element={<VerificationQueuePage />} />
               <Route path="draft-shipments" element={<DraftShipmentsPage />} />
               <Route path="dispatch-calendar" element={<DispatchCalendarPage />} />

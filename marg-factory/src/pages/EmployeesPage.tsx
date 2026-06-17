@@ -43,9 +43,9 @@ const EmployeesPage: React.FC = () => {
       await api.post('/auth/provision/', formData);
       setShowModal(false);
       fetchEmployees();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to provision user');
+      alert('Failed to provision user: ' + JSON.stringify(err.response?.data || err.message));
     }
   };
 

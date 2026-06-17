@@ -11,7 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid } from 'recharts';
-import { dashboardApi, shipmentsApi } from '@/api/endpoints';
+import { dashboardApi, shipmentsApi, lotsApi } from '@/api/endpoints';
 import { STATUS_COLORS } from '@/theme/statusColors';
 
 const METRIC_CARDS = [
@@ -25,18 +25,15 @@ const METRIC_CARDS = [
 
 const QUICK_ACTIONS = [
   { label: 'Create New Lot', icon: <Add />, path: '/lots/new', bg: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', color: '#fff' },
-  { label: 'Schedule Dispatch', icon: <CalendarMonth />, path: '/dispatch-calendar', bg: '#FFF', color: '#332922' },
-  { label: 'Review Exceptions', icon: <Warning />, path: '/exceptions', bg: '#FFF', color: '#332922' },
-  { label: 'Track Shipment', icon: <Map />, path: '/lot-traceability', bg: '#FFF', color: '#332922' },
+  { label: 'Active Lots', icon: <Assignment />, path: '/lots', bg: '#FFF', color: '#332922' },
 ];
 
 const WORKFLOW_STATUS = [
   { label: 'Draft Lots', count: 0, path: '/lots', bg: '#FFF7ED', color: '#EA580C', icon: <Assignment sx={{ fontSize: 20 }} /> },
-  { label: 'Awaiting Warehouse', count: 0, path: '/pending-approvals', bg: '#FEF3C7', color: '#D97706', icon: <HourglassTop sx={{ fontSize: 20 }} /> },
-  { label: 'Awaiting Driver Arrival', count: 0, path: '/shipments', bg: '#DBEAFE', color: '#2563EB', icon: <Storefront sx={{ fontSize: 20 }} /> },
-  { label: 'Awaiting Cargo Acceptance', count: 0, path: '/shipments', bg: '#F0FDF4', color: '#16A34A', icon: <FactCheck sx={{ fontSize: 20 }} /> },
+  { label: 'Awaiting Warehouse', count: 0, path: '/lots', bg: '#FEF3C7', color: '#D97706', icon: <HourglassTop sx={{ fontSize: 20 }} /> },
+  { label: 'Warehouse Confirmed', count: 0, path: '/lots', bg: '#F0FDF4', color: '#16A34A', icon: <FactCheck sx={{ fontSize: 20 }} /> },
+  { label: 'Partner Selected', count: 0, path: '/lots', bg: '#DBEAFE', color: '#2563EB', icon: <Storefront sx={{ fontSize: 20 }} /> },
   { label: 'Active Shipments', count: 0, path: '/shipments', bg: '#EFF6FF', color: '#3B82F6', icon: <LocalShipping sx={{ fontSize: 20 }} /> },
-  { label: 'Completed', count: 0, path: '/completed-shipments', bg: '#D1FAE5', color: '#059669', icon: <DoneAll sx={{ fontSize: 20 }} /> },
 ];
 
 const PIE_COLORS = ['#F97316', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6', '#6B7280'];
@@ -61,9 +58,15 @@ export default function DashboardPage() {
     queryFn: () => shipmentsApi.list({ page_size: 5 }),
   });
 
+  const { data: activeLotsData } = useQuery({
+    queryKey: ['active-lots', { status__in: 'DRAFT,UNDER_REVIEW,PENDING_WAREHOUSE_APPROVAL,WAREHOUSE_APPROVED,SHARED,ACCEPTED,SHIPMENT_GENERATED', page_size: 5 }],
+    queryFn: () => lotsApi.list({ status__in: 'DRAFT,UNDER_REVIEW,PENDING_WAREHOUSE_APPROVAL,WAREHOUSE_APPROVED,SHARED,ACCEPTED,SHIPMENT_GENERATED', page_size: 5 }),
+  });
+
   const dash = dashData?.data?.data ?? {};
   const transit = transitData?.data?.data ?? {};
   const recentShipments = shipmentsData?.data?.results ?? [];
+  const activeLots = activeLotsData?.data?.results ?? activeLotsData?.data?.data ?? [];
 
   const pieData = transit.shipments ? [
     { name: 'In Transit', value: transit.shipments?.in_transit ?? 0 },
@@ -169,79 +172,8 @@ export default function DashboardPage() {
 
 
 
-      {/* Charts Row */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Delivery Trend */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ height: '100%', borderRadius: '24px' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Shipment Volume Timeline</Typography>
-                  <Typography variant="body2" sx={{ color: '#8A7F75' }}>7-day dispatch efficiency</Typography>
-                </Box>
-                <Chip label="• Live" size="small" sx={{ bgcolor: '#D1FAE5', color: '#059669', fontWeight: 700, borderRadius: '8px' }} />
-              </Box>
-              <Box sx={{ height: 280 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendData}>
-                    <defs>
-                      <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#EA580C" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#EA580C" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#8A7F75', fontSize: 12 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8A7F75', fontSize: 12 }} dx={-10} />
-                    <ReTooltip cursor={{ fill: 'rgba(234, 88, 12, 0.05)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(214, 204, 194, 0.4)' }} />
-                    <Area type="monotone" dataKey="shipments" stroke="#EA580C" strokeWidth={3} fill="url(#orangeGrad)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
 
-        {/* Shipment Status */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ height: '100%', borderRadius: '24px' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Status Distribution</Typography>
-              <Typography variant="body2" sx={{ color: '#8A7F75', mb: 3 }}>Active load allocation</Typography>
-              
-              {pieData.length > 0 ? (
-                <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
-                        {pieData.map((_, i) => (
-                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <ReTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(214, 204, 194, 0.4)' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Box>
-              ) : (
-                <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography variant="body2" sx={{ color: '#9CA3AF' }}>No active shipments</Typography>
-                </Box>
-              )}
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mt: 2 }}>
-                {pieData.map((d, i) => (
-                  <Box key={d.name} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: PIE_COLORS[i] }} />
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{d.name}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Fleet Stats + Recent Shipments */}
+      {/* Fleet Stats + Recent Shipments + Active Workflows */}
       <Grid container spacing={2.5}>
         {/* Fleet */}
         <Grid size={{ xs: 12, md: 4 }}>
@@ -303,6 +235,52 @@ export default function DashboardPage() {
               {recentShipments.length === 0 && (
                 <Typography variant="body2" sx={{ py: 4, textAlign: 'center', color: '#8A7F75' }}>
                   No shipments yet. Create your first one!
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Active Workflows */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ borderRadius: '24px' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Active Workflows (Check Workflow)</Typography>
+                <Button size="small" variant="contained" color="primary" sx={{ borderRadius: '8px', px: 2 }} onClick={() => navigate('/lots')}>View All →</Button>
+              </Box>
+              {activeLots.map((lot: any) => {
+                return (
+                  <Box key={lot.id} onClick={() => navigate(`/lots/${lot.id}/workflow`)}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 3, py: 2,
+                      borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer',
+                      transition: 'background 0.2s',
+                      '&:hover': { bgcolor: 'rgba(249, 115, 22, 0.02)' }, borderRadius: '12px', px: 2
+                    }}
+                  >
+                    <Box sx={{ 
+                      width: 40, height: 40, borderRadius: '10px', bgcolor: 'rgba(249, 115, 22, 0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                    }}>
+                      <Assignment sx={{ color: '#EA580C' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#332922' }}>
+                        {lot.lot_number}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#8A7F75', fontWeight: 500 }}>
+                        {lot.destination_name || 'Destination TBD'} • {lot.parcels?.length || 0} Parcels
+                        {lot.assigned_logistics_name ? ` • Assigned to: ${lot.assigned_logistics_name}` : ''}
+                      </Typography>
+                    </Box>
+                    <Chip label={lot.status} size="small" sx={{ fontWeight: 700, borderRadius: '8px', bgcolor: '#FFF7ED', color: '#EA580C' }} />
+                  </Box>
+                );
+              })}
+              {activeLots.length === 0 && (
+                <Typography variant="body2" sx={{ py: 4, textAlign: 'center', color: '#8A7F75' }}>
+                  No active workflows found.
                 </Typography>
               )}
             </CardContent>

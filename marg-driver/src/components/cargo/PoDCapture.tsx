@@ -19,9 +19,10 @@ export default function PoDCapture() {
     if (!currentShipment) return;
     setSubmitting(true);
     try {
-      await api.post(`/shipments/${currentShipment.id}/complete/`);
-      updateShipment({ ...currentShipment, status: "COMPLETED" });
-      alert("Shipment completed successfully!");
+      // We simulate uploading the PoD, but we don't complete the shipment.
+      // The Warehouse Admin is responsible for the Receiving Checklist which completes it.
+      await new Promise(r => setTimeout(r, 1000));
+      alert("PoD Submitted Successfully! Waiting for Warehouse to complete Receiving.");
     } catch (err: any) {
       alert("Failed to complete shipment: " + err.message);
     } finally {

@@ -15,7 +15,9 @@ export default function ETACard() {
       try {
         const res = await api.get("/shipments/");
         const list = Array.isArray(res.data) ? res.data : res.data.results || [];
-        list.forEach((s: any) => updateShipment(s));
+        // Filter out completed/cancelled, and reverse so newest gets prepended last and stays at index 0
+        const activeList = list.filter((s: any) => !['COMPLETED', 'CANCELLED', 'FAILED'].includes(s.status));
+        activeList.reverse().forEach((s: any) => updateShipment(s));
       } catch (err) {
         console.error("Failed to load shipments:", err);
       }

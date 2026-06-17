@@ -2,20 +2,22 @@ import { Box, Typography, Card, CardContent, Grid, Chip, Button, Divider, alpha,
 import { FactCheck, WarningAmber, LocalShipping, Scale, Inventory2, ReportProblem } from '@mui/icons-material';
 
 import { useEffect, useState } from 'react';
-import { shipmentsApi } from '../api/endpoints';
+import { lotsApi } from '../api/endpoints';
+import { useNavigate } from 'react-router-dom';
 
 const ORANGE = '#E8700A';
 
 export default function WarehouseApprovalsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchRequests = () => {
     setLoading(true);
-    shipmentsApi.list()
+    lotsApi.list()
       .then(res => {
-        const allShipments = res.data.results || res.data || [];
-        setRequests(allShipments.filter((s: any) => s.status === 'DRAFT'));
+        const allLots = res.data.results || res.data || [];
+        setRequests(allLots.filter((l: any) => l.status === 'PENDING_WAREHOUSE_APPROVAL' || l.status === 'WAREHOUSE_APPROVED'));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -27,7 +29,7 @@ export default function WarehouseApprovalsPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      await shipmentsApi.approveWarehouse(id);
+      await lotsApi.approveWarehouse(id);
       fetchRequests();
     } catch (e) {
       console.error(e);
@@ -37,7 +39,7 @@ export default function WarehouseApprovalsPage() {
 
   const handleReject = async (id: number) => {
     try {
-      await shipmentsApi.rejectWarehouse(id);
+      await lotsApi.rejectWarehouse(id);
       fetchRequests();
     } catch (e) {
       console.error(e);
@@ -72,18 +74,22 @@ export default function WarehouseApprovalsPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box>
                     <Typography sx={{ fontWeight: 800, color: '#0F172A', fontSize: '1.1rem' }}>{req.factory_name || 'Unknown Factory'}</Typography>
-                    <Typography variant="body2" sx={{ color: '#64748B', fontFamily: 'monospace' }}>Request: {req.id} • Ref: {req.shipment_number}</Typography>
+                    <Typography variant="body2" sx={{ color: '#64748B', fontFamily: 'monospace' }}>Request: {req.id} • Ref: {req.lot_number || `LOT-${req.id}`}</Typography>
                   </Box>
                   <Chip 
-                    label="Pending Review" 
+                    label={req.status === 'WAREHOUSE_APPROVED' ? "Approved" : "Pending Review"} 
                     size="small" 
-                    sx={{ bgcolor: alpha(ORANGE, 0.1), color: ORANGE, fontWeight: 700 }}
+                    sx={{ 
+                      bgcolor: req.status === 'WAREHOUSE_APPROVED' ? alpha('#22C55E', 0.1) : alpha(ORANGE, 0.1), 
+                      color: req.status === 'WAREHOUSE_APPROVED' ? '#22C55E' : ORANGE, 
+                      fontWeight: 700 
+                    }}
                   />
                 </Box>
 
                 <Box sx={{ p: 2, bgcolor: alpha('#F1F5F9', 0.5), borderRadius: 2, mb: 3 }}>
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Requested ETA</Typography>
-                  <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{req.expected_arrival_time ? new Date(req.expected_arrival_time).toLocaleString() : 'Not Specified'}</Typography>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Expected Dispatch Date</Typography>
+                  <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{req.expected_dispatch_date ? new Date(req.expected_dispatch_date).toLocaleDateString() : 'Not Specified'}</Typography>
                 </Box>
 
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1.5 }}>Expected Workload</Typography>
@@ -93,7 +99,7 @@ export default function WarehouseApprovalsPage() {
                       <Inventory2 sx={{ color: '#94A3B8', fontSize: 18 }} />
                       <Box>
                         <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', lineHeight: 1 }}>Parcels</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>-</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.parcels ? req.parcels.length : '-'}</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -111,7 +117,7 @@ export default function WarehouseApprovalsPage() {
                       <Scale sx={{ color: '#94A3B8', fontSize: 18 }} />
                       <Box>
                         <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', lineHeight: 1 }}>Weight</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.total_weight_kg || 0} kg</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.total_weight || 0} kg</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -137,17 +143,22 @@ export default function WarehouseApprovalsPage() {
                 </Box>
               </CardContent>
               <CardContent sx={{ bgcolor: '#F8FAFC', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button onClick={() => handleApprove(req.id)} variant="contained" sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
-                  Approve
-                </Button>
-                <Button variant="outlined" sx={{ color: '#0F172A', borderColor: '#CBD5E1', fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '160px' }}>
-                  Approve w/ Conditions
-                </Button>
-                <Button variant="outlined" sx={{ color: '#F59E0B', borderColor: alpha('#F59E0B', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
-                  Request Delay
-                </Button>
-                <Button onClick={() => handleReject(req.id)} variant="outlined" sx={{ color: '#EF4444', borderColor: alpha('#EF4444', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '100px' }}>
-                  Reject
+                {req.status === 'PENDING_WAREHOUSE_APPROVAL' ? (
+                  <>
+                    <Button onClick={() => handleApprove(req.id)} variant="contained" sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
+                      Approve & Slot
+                    </Button>
+                    <Button onClick={() => handleReject(req.id)} variant="outlined" sx={{ color: '#EF4444', borderColor: alpha('#EF4444', 0.5), fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '100px' }}>
+                      Reject
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => navigate(`/warehouse-3d/${req.id}`)} variant="contained" sx={{ bgcolor: '#3B82F6', '&:hover': { bgcolor: '#2563EB' }, fontWeight: 700, textTransform: 'none', flex: 1, minWidth: '120px' }}>
+                    View 3D Plan
+                  </Button>
+                )}
+                <Button onClick={() => navigate(`/warehouse-approvals/${req.id}/workflow`)} variant="outlined" sx={{ fontWeight: 700, textTransform: 'none', minWidth: '120px' }}>
+                  View Workflow
                 </Button>
               </CardContent>
             </Card>

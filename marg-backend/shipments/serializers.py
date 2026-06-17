@@ -152,6 +152,42 @@ class LotParcelSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'lot', 'created_at', 'updated_at')
 
 
+class RequestDockSerializer(serializers.Serializer):
+    requested_arrival_time = serializers.DateTimeField(required=True)
+
+
+class ApproveDockSerializer(serializers.Serializer):
+    dock_id = serializers.IntegerField(required=True)
+
+class LotListSerializer(serializers.ModelSerializer):
+    parcels = LotParcelSerializer(many=True, read_only=True)
+    factory_name = serializers.SerializerMethodField()
+
+    def get_factory_name(self, obj):
+        fac = obj.factory
+        if fac:
+            return f"{fac.name} ({fac.city})" if fac.city else fac.name
+        return None
+    destination_name = serializers.SerializerMethodField()
+    assigned_logistics_name = serializers.CharField(source='assigned_logistics_company.name', read_only=True, default=None)
+    total_weight = serializers.SerializerMethodField()
+
+    def get_destination_name(self, obj):
+        wh = obj.destination_warehouse
+        if wh:
+            return f"{wh.name} ({wh.city})" if wh.city else wh.name
+        return None
+    
+    def get_total_weight(self, obj):
+        return sum([p.weight * p.quantity for p in obj.parcels.all()])
+    
+    shipments = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    
+    class Meta:
+        model = Lot
+        fields = '__all__'
+        read_only_fields = ('id', 'lot_number', 'created_by', 'created_at', 'updated_at')
+
 class LotSerializer(serializers.ModelSerializer):
     parcels = LotParcelSerializer(many=True, read_only=True)
     factory_name = serializers.SerializerMethodField()
@@ -173,6 +209,8 @@ class LotSerializer(serializers.ModelSerializer):
     
     def get_total_weight(self, obj):
         return sum([p.weight * p.quantity for p in obj.parcels.all()])
+    
+    shipments = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     
     class Meta:
         model = Lot

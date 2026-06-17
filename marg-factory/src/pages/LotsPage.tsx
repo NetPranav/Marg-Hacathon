@@ -69,20 +69,25 @@ export default function LotsPage() {
               </TableHead>
               <TableBody>
                 {lots.map((lot) => (
-                  <TableRow key={lot.id} hover>
+                  <TableRow 
+                    key={lot.id} 
+                    hover 
+                    onClick={() => navigate(`/lots/${lot.id}/workflow`)}
+                    sx={{ cursor: 'pointer' }}
+                  >
                     <TableCell sx={{ fontWeight: 600, color: '#332922' }}>{lot.lot_number}</TableCell>
                     <TableCell>{lot.destination_name || 'N/A'}</TableCell>
                     <TableCell>{lot.parcels?.length || 0} items</TableCell>
                     <TableCell>
                       <Chip 
-                        label={lot.status.replace('_', ' ')} 
-                        color={getStatusColor(lot.status)}
+                        label={lot.status.replace(/_/g, ' ')} 
+                        color={getStatusColor(lot.status) as any}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>{lot.assigned_logistics_name || '-'}</TableCell>
                     <TableCell align="right">
-                      <Button size="small" onClick={() => navigate('/logistics')}>Find Partner</Button>
+                      <Button size="small" variant="outlined" onClick={(e) => { e.stopPropagation(); navigate(`/lots/${lot.id}/workflow`); }}>Open Workflow</Button>
                     </TableCell>
                   </TableRow>
                 ))}

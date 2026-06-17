@@ -26,6 +26,13 @@ export const shipmentsApi = {
   rejectWarehouse: (id: number) => client.post(`/shipments/${id}/reject-warehouse/`),
 };
 
+export const lotsApi = {
+  list: (params?: Record<string, unknown>) => client.get('/shipments/lots/', { params }),
+  get: (id: number) => client.get(`/shipments/lots/${id}/`),
+  approveWarehouse: (id: number) => client.post(`/shipments/lots/${id}/approve-warehouse/`),
+  rejectWarehouse: (id: number) => client.post(`/shipments/lots/${id}/reject-warehouse/`),
+};
+
 export const warehousesApi = {
   list: (params?: Record<string, unknown>) => client.get('/warehouses/', { params }),
   get: (id: number) => client.get(`/warehouses/${id}/`),

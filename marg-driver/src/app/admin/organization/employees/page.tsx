@@ -50,8 +50,9 @@ export default function EmployeesPage() {
       setShowForm(false);
       setForm({ first_name: "", last_name: "", email: "", phone: "", department: "", role: "EMPLOYEE" });
       loadEmployees();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Add employee error:", err);
+      alert("Failed to create employee: " + JSON.stringify(err.response?.data || err.message));
     } finally {
       setSaving(false);
     }
@@ -139,7 +140,7 @@ export default function EmployeesPage() {
                 className="w-full mt-1 px-3 py-2 bg-brand-bg border border-black/[0.06] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
               >
                 <option value="EMPLOYEE">Employee</option>
-                <option value="MANAGER">Manager</option>
+                <option value="DISPATCH_MANAGER">Manager</option>
                 <option value="ADMIN">Admin</option>
               </select>
             </div>

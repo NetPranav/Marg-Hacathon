@@ -30,7 +30,7 @@ class Lot(TimestampMixin, models.Model):
         'warehouses.Warehouse', on_delete=models.CASCADE, related_name='incoming_lots'
     )
     status = models.CharField(
-        max_length=25, choices=LotStatus.choices, default=LotStatus.DRAFT
+        max_length=50, choices=LotStatus.choices, default=LotStatus.DRAFT
     )
     assigned_logistics_company = models.ForeignKey(
         'logistics.LogisticsCompany', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_lots'

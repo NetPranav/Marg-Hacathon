@@ -14,6 +14,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { shipmentsApi, fleetApi } from '@/api/endpoints';
 import { STATUS_COLORS, PRIORITY_COLORS } from '@/theme/statusColors';
+import SimpleMap from '@/components/SimpleMap';
 
 export default function ShipmentDetailPage() {
   const { id } = useParams();
@@ -134,6 +135,15 @@ export default function ShipmentDetailPage() {
                       </Grid>
                     ))}
                   </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Map Card */}
+            <Grid size={12}>
+              <Card>
+                <CardContent sx={{ p: 0, pb: '0 !important' }}>
+                  <SimpleMap />
                 </CardContent>
               </Card>
             </Grid>

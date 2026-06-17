@@ -5,7 +5,7 @@ import {
   TrendingUp, ArrowForward, ViewInAr, Radar, Inventory2, Gavel,
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { dashboardApi, shipmentsApi, slottingApi } from '@/api/endpoints';
+import { dashboardApi, shipmentsApi, slottingApi, lotsApi } from '@/api/endpoints';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useSlottingStore } from '@/stores/slottingStore';
@@ -100,6 +100,11 @@ export default function DashboardPage() {
     queryFn: () => shipmentsApi.list({ status: 'IN_TRANSIT', page_size: 5 }),
   });
 
+  const { data: activeLotsData } = useQuery({
+    queryKey: ['active-lots', { status__in: 'PENDING_WAREHOUSE_APPROVAL,WAREHOUSE_APPROVED,SHARED,ACCEPTED,SHIPMENT_GENERATED', page_size: 5 }],
+    queryFn: () => lotsApi.list({ status__in: 'PENDING_WAREHOUSE_APPROVAL,WAREHOUSE_APPROVED,SHARED,ACCEPTED,SHIPMENT_GENERATED', page_size: 5 }),
+  });
+
   // Load layout for the Mini Map if not already loaded
   const { layout, setLayout, setParcels, parcels } = useSlottingStore();
   const [parcelSearch, setParcelSearch] = useState('');
@@ -134,6 +139,7 @@ export default function DashboardPage() {
 
   const d = data?.data?.data;
   const incomingShipments = shipmentsData?.data?.results ?? [];
+  const activeLots = activeLotsData?.data?.results ?? activeLotsData?.data?.data ?? [];
 
   if (isLoading) {
     return (
@@ -444,7 +450,7 @@ export default function DashboardPage() {
                           {s.truck_number || 'TRK-UNKNOWN'} • {s.driver_name || 'Unassigned Driver'}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#94A3B8' }}>
-                          Shipment: {s.shipment_number} | ETA: {s.expected_arrival_time ? new Date(s.expected_arrival_time).toLocaleTimeString() : 'Pending'} | Dock: {s.assigned_dock || 'Unassigned'}
+                          Shipment: {s.shipment_number} | ETA: {s.expected_arrival_time ? new Date(s.expected_arrival_time).toLocaleTimeString() : 'Pending'} | Dock: {s.assigned_dock ? s.assigned_dock.name : 'Unassigned'}
                         </Typography>
                       </Box>
                     </Box>
@@ -459,6 +465,81 @@ export default function DashboardPage() {
                   </Box>
                 );
               })}
+            </Box>
+          )}
+        </Box>
+      </Card>
+
+      {/* Active Workflows */}
+      <Card sx={{ overflow: 'hidden', mt: 3 }}>
+        <Box sx={{
+          px: 3, py: 2,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          borderBottom: '1px solid rgba(0,0,0,0.04)',
+        }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Active Workflows (Check Workflow)</Typography>
+          <Chip
+            label="View All →"
+            onClick={() => navigate('/warehouse-approvals')}
+            sx={{
+              cursor: 'pointer', bgcolor: alpha(ORANGE, 0.08), color: ORANGE,
+              fontWeight: 600, fontSize: '0.72rem',
+              '&:hover': { bgcolor: alpha(ORANGE, 0.15) },
+            }}
+          />
+        </Box>
+        <Box sx={{ p: 2.5 }}>
+          {activeLots.length === 0 ? (
+            <Typography variant="body2" sx={{ color: '#94A3B8', py: 4, textAlign: 'center' }}>
+              No active workflows found
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {activeLots.map((lot: any, i: number) => (
+                <Box
+                  key={lot.id}
+                  onClick={() => navigate(`/warehouse-approvals/${lot.id}/workflow`)}
+                  sx={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    p: 1.5, borderRadius: '12px', cursor: 'pointer',
+                    bgcolor: 'rgba(0,0,0,0.015)',
+                    border: '1px solid transparent',
+                    transition: 'all 0.2s ease',
+                    animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both`,
+                    '&:hover': {
+                      bgcolor: alpha(ORANGE, 0.03),
+                      borderColor: alpha(ORANGE, 0.1),
+                      transform: 'translateX(4px)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{
+                      width: 36, height: 36, borderRadius: '10px',
+                      bgcolor: alpha(ORANGE, 0.08), display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Anchor sx={{ fontSize: 18, color: ORANGE }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.85rem' }}>
+                        Lot {lot.lot_number}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#94A3B8' }}>
+                        From {lot.factory_name} | {lot.parcels?.length || 0} parcels
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Chip
+                    label={lot.status}
+                    size="small"
+                    sx={{
+                      bgcolor: alpha(ORANGE, 0.08), color: ORANGE,
+                      fontWeight: 600, fontSize: '0.68rem',
+                    }}
+                  />
+                </Box>
+              ))}
             </Box>
           )}
         </Box>

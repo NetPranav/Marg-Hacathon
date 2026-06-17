@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Box, Typography, Card, CardContent, Grid, Button, Checkbox, TextField, alpha } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Typography, Card, CardContent, Grid, Button, Checkbox, alpha, CircularProgress, Alert } from '@mui/material';
 import { ChecklistRtl, Inventory, Layers, BrokenImage, VerifiedUser, WarningAmber } from '@mui/icons-material';
+import { shipmentsApi } from '@/api/endpoints';
 
 const ORANGE = '#E8700A';
 
@@ -13,13 +15,32 @@ const RECEIVING_CHECKS = [
 ];
 
 export default function ReceivingChecklistPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [checks, setChecks] = useState<Record<string, boolean>>({});
-  const [shipmentId, setShipmentId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const shipmentId = id || '';
 
   const allChecked = RECEIVING_CHECKS.every(item => checks[item.id]);
 
   const toggleCheck = (id: string) => {
     setChecks(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleComplete = async () => {
+    if (!shipmentId) return;
+    setLoading(true);
+    setError('');
+    try {
+      await shipmentsApi.complete(Number(shipmentId));
+      navigate(`/dashboard`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to complete receiving.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,6 +53,8 @@ export default function ReceivingChecklistPage() {
           Inspect incoming cargo and verify accuracy before accepting goods into inventory.
         </Typography>
       </Box>
+
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
@@ -47,26 +70,17 @@ export default function ReceivingChecklistPage() {
                 </Box>
                 <Box>
                   <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Shipment Context</Typography>
-                  <Typography variant="body2" sx={{ color: '#64748B' }}>Enter Shipment ID</Typography>
+                  <Typography variant="body2" sx={{ color: '#64748B' }}>Shipment ID: {shipmentId}</Typography>
                 </Box>
               </Box>
-
-              <TextField 
-                fullWidth 
-                label="Shipment ID" 
-                variant="outlined" 
-                value={shipmentId}
-                onChange={(e) => setShipmentId(e.target.value)}
-                sx={{ mb: 3 }}
-              />
 
               <Button 
                 variant="contained" 
                 fullWidth 
-                disabled={!shipmentId}
-                sx={{ bgcolor: '#0F172A', '&:hover': { bgcolor: '#1E293B' }, py: 1.5, fontWeight: 700, borderRadius: 2 }}
+                disabled
+                sx={{ bgcolor: '#0F172A', '&.Mui-disabled': { bgcolor: '#0F172A', color: 'white', opacity: 0.7 }, py: 1.5, fontWeight: 700, borderRadius: 2 }}
               >
-                Load Manifest
+                Manifest Loaded
               </Button>
             </CardContent>
           </Card>
@@ -110,7 +124,9 @@ export default function ReceivingChecklistPage() {
                   <Button 
                     variant="contained" 
                     fullWidth 
-                    disabled={!allChecked}
+                    onClick={handleComplete}
+                    disabled={!allChecked || loading}
+                    startIcon={loading && <CircularProgress size={16} />}
                     sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, py: 1.5, fontWeight: 700 }}
                   >
                     Complete Receiving & Trigger Slotting

@@ -31,6 +31,8 @@ const DockAssignmentPage = lazy(() => import('@/pages/DockAssignmentPage'));
 
 const SlottingPage = lazy(() => import('@/pages/SlottingPage'));
 
+const WarehouseLotWorkflowPage = lazy(() => import('@/pages/WarehouseLotWorkflowPage'));
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
@@ -82,12 +84,13 @@ export default function App() {
         {/* New Workflow Routes wrapped in Suspense */}
         <Route path="arrival-schedule" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ArrivalSchedulePage /></Suspense>} />
         <Route path="warehouse-approvals" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><WarehouseApprovalsPage /></Suspense>} />
+        <Route path="warehouse-approvals/:id/workflow" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><WarehouseLotWorkflowPage /></Suspense>} />
         
         {/* Dock Operations (Existing inbound-yard + new) */}
         <Route path="dock-assignment" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><DockAssignmentPage /></Suspense>} />
 
         <Route path="gate-checkin" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><GateCheckInPage /></Suspense>} />
-        <Route path="receiving-checklist" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ReceivingChecklistPage /></Suspense>} />
+        <Route path="receiving-checklist/:id" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ReceivingChecklistPage /></Suspense>} />
         <Route path="exceptions" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ExceptionsPage /></Suspense>} />
         <Route path="conversations" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ShipmentConversationsPage /></Suspense>} />
 
@@ -103,6 +106,16 @@ export default function App() {
       </Route>
       <Route
         path="digital-twin"
+        element={
+          <ProtectedRoute>
+            <Suspense fallback={<TwinLoader />}>
+              <SlottingPage />
+            </Suspense>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="warehouse-3d/:lotId"
         element={
           <ProtectedRoute>
             <Suspense fallback={<TwinLoader />}>

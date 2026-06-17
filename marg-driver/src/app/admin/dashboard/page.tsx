@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import {
   TrendingUp, Truck, Package, Users, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Clock, CheckCircle2,
-  Navigation, RotateCcw, DollarSign, Activity
+  Navigation, RotateCcw, DollarSign, Activity, FileText
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
 
@@ -33,7 +34,9 @@ export default function OwnerDashboard() {
     emptyMilesReduced: 0,
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [activeLots, setActiveLots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     loadDashboard();
@@ -41,15 +44,17 @@ export default function OwnerDashboard() {
 
   const loadDashboard = async () => {
     try {
-      const [shipmentsRes, trucksRes, driversRes] = await Promise.allSettled([
+      const [shipmentsRes, trucksRes, driversRes, lotsRes] = await Promise.allSettled([
         api.get("/shipments/"),
         api.get("/trucks/"),
         api.get("/drivers/"),
+        api.get("/shipments/lots/", { params: { status__in: 'SHARED,ACCEPTED,SHIPMENT_GENERATED', page_size: 5 } }),
       ]);
 
       const shipments = shipmentsRes.status === "fulfilled" ? shipmentsRes.value.data : [];
       const trucks = trucksRes.status === "fulfilled" ? trucksRes.value.data : [];
       const drivers = driversRes.status === "fulfilled" ? driversRes.value.data : [];
+      const lotsData = lotsRes.status === "fulfilled" ? lotsRes.value.data : [];
 
       const shipmentList = Array.isArray(shipments) ? shipments : shipments.results || [];
       const truckList = Array.isArray(trucks) ? trucks : trucks.results || [];
@@ -77,6 +82,8 @@ export default function OwnerDashboard() {
           time: s.updated_at || s.created_at,
         }))
       );
+
+      setActiveLots(Array.isArray(lotsData) ? lotsData : lotsData.results || []);
     } catch (err) {
       console.error("Dashboard load error:", err);
     } finally {
@@ -199,6 +206,49 @@ export default function OwnerDashboard() {
                 </div>
                 <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${getStatusColor(item.status)}`}>
                   {item.status?.replace(/_/g, " ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Active Workflows */}
+      <div className="bg-white rounded-2xl border border-black/[0.04] overflow-hidden mt-6">
+        <div className="px-5 py-4 border-b border-black/[0.04] flex justify-between items-center">
+          <h2 className="font-semibold text-brand-text">Active Workflows (Check Workflow)</h2>
+          <button 
+            onClick={() => router.push('/admin/marketplace/requests')}
+            className="text-xs font-medium text-brand-orange hover:bg-brand-orange/10 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            View All →
+          </button>
+        </div>
+        {activeLots.length === 0 ? (
+          <div className="p-8 text-center text-brand-muted text-sm">
+            No active workflows found.
+          </div>
+        ) : (
+          <div className="divide-y divide-black/[0.03]">
+            {activeLots.map((lot) => (
+              <div 
+                key={lot.id} 
+                onClick={() => router.push(`/admin/marketplace/requests/${lot.id}/workflow`)}
+                className="px-5 py-3.5 flex items-center justify-between hover:bg-black/[0.02] transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-brand-orange/10 rounded-xl flex items-center justify-center">
+                    <FileText size={18} className="text-brand-orange" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-brand-text">Lot {lot.lot_number}</p>
+                    <p className="text-xs text-brand-muted flex items-center gap-1">
+                      From {lot.factory_name} | {lot.parcels?.length || 0} parcels
+                    </p>
+                  </div>
+                </div>
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg bg-orange-50 text-brand-orange`}>
+                  {lot.status?.replace(/_/g, " ")}
                 </span>
               </div>
             ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import { useSlottingStore } from '@/stores/slottingStore';
 import { slottingApi } from '@/api/endpoints';
 import WarehouseCanvas from '@/components/slotting/WarehouseCanvas';
@@ -10,6 +11,7 @@ import SlottingHUD from '@/components/slotting/SlottingHUD';
 export default function SlottingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { lotId } = useParams();
   
   const { setLayout, setParcels, viewMode } = useSlottingStore();
 
@@ -27,7 +29,15 @@ export default function SlottingPage() {
         
         if (mounted) {
           setLayout(layoutRes.data);
-          setParcels(parcelsRes.data.results || parcelsRes.data);
+          const allParcels = parcelsRes.data.results || parcelsRes.data;
+          setParcels(allParcels);
+          
+          if (lotId) {
+            const lotParcelIds = allParcels
+              .filter((p: any) => String(p.parcel_id).startsWith(`${lotId}-`))
+              .map((p: any) => p.id);
+            useSlottingStore.setState({ selectedParcelIds: lotParcelIds });
+          }
         }
       } catch (err) {
         if (mounted) {

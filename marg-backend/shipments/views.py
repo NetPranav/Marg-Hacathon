@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from common.enums import UserRole, ShipmentStatus, ShipmentEventType
+from django.db.models import Q
 from fleet.models import Truck, Driver
 from warehouses.models import DockBay
 from audit.services import get_client_ip
@@ -28,8 +29,12 @@ from operations.services.arrival_service import (
     mark_arrived, approve_gate_entry, start_unloading, complete_shipment, cancel_shipment, ArrivalError,
 )
 
-from .models import Shipment
-from .serializers import ShipmentSerializer, ShipmentListSerializer, ShipmentCreateSerializer
+from .models import Shipment, Lot, LotParcel
+from .serializers import (
+    ShipmentSerializer, ShipmentListSerializer, ShipmentCreateSerializer,
+    LotSerializer, LotListSerializer, LotParcelSerializer,
+    RequestDockSerializer, ApproveDockSerializer
+)
 
 
 @extend_schema_view(
@@ -69,13 +74,19 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         if user.role == UserRole.SUPER_ADMIN:
             return qs.all()
         if user.role == UserRole.FACTORY_MANAGER:
-            return qs.filter(factory__organization=user.organization)
+            if user.organization:
+                return qs.filter(Q(factory__organization=user.organization) | Q(created_by=user)).distinct()
+            return qs.filter(created_by=user)
         if user.role == UserRole.WAREHOUSE_MANAGER:
-            return qs.filter(destination_warehouse__organization=user.organization)
+            if user.organization:
+                return qs.filter(destination_warehouse__organization=user.organization)
+            return qs.none()
         if user.role == UserRole.DRIVER:
             return qs.filter(assigned_driver__user=user)
         if user.role == UserRole.ADMIN:
-            return qs.filter(logistics_provider=user.organization)
+            if user.organization:
+                return qs.filter(logistics_provider=user.organization)
+            return qs.none()
         return qs.none()
 
     def create(self, request, *args, **kwargs):
@@ -267,7 +278,15 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
 
         try:
-            ready_for_dispatch(shipment, request.user, ip_address=get_client_ip(request))
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus
+            if shipment.status == ShipmentStatus.DRIVER_ASSIGNED:
+                transition_shipment(shipment, ShipmentStatus.READY_FOR_PICKUP)
+            if shipment.status == ShipmentStatus.READY_FOR_PICKUP:
+                transition_shipment(shipment, ShipmentStatus.LOADING_IN_PROGRESS)
+
+            from operations.services.dispatch_service import dispatch_shipment
+            dispatch_shipment(shipment, request.user, ip_address=get_client_ip(request))
         except (DispatchError, InvalidTransitionError) as e:
             return Response(
                 {'success': False, 'message': str(e)},
@@ -306,6 +325,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
 
         try:
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus
+            if shipment.status == ShipmentStatus.IN_TRANSIT:
+                transition_shipment(shipment, ShipmentStatus.APPROACHING_DESTINATION)
+
             mark_arrived(shipment, request.user, ip_address=get_client_ip(request))
         except (ArrivalError, InvalidTransitionError) as e:
             return Response(
@@ -392,6 +416,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             if shipment.status == ShipmentStatus.LOADING_IN_PROGRESS:
                 transition_shipment(shipment, ShipmentStatus.READY_FOR_TRANSIT)
             if shipment.status == ShipmentStatus.READY_FOR_TRANSIT:
+                # If dock approval is skipped
+                transition_shipment(shipment, ShipmentStatus.IN_TRANSIT)
+            if shipment.status == ShipmentStatus.DOCK_APPROVED:
                 transition_shipment(shipment, ShipmentStatus.IN_TRANSIT)
             
             # Record transit start time if we want to use actual_dispatch_time
@@ -423,12 +450,135 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             'data': ShipmentSerializer(shipment).data,
         })
 
+    @extend_schema(
+        tags=['Dock Reservations'],
+        summary='Request a dock reservation',
+        request=RequestDockSerializer,
+    )
+    @action(detail=True, methods=['post'], url_path='request-dock')
+    def request_dock(self, request, pk=None):
+        shipment = self.get_object()
+        serializer = RequestDockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus, ShipmentEventType
+            from operations.models import ShipmentEvent
+            
+            transition_shipment(shipment, ShipmentStatus.DOCK_REQUESTED)
+            shipment.expected_arrival_time = serializer.validated_data['requested_arrival_time']
+            shipment.save()
+            
+            ShipmentEvent.objects.create(
+                shipment=shipment,
+                event_type=ShipmentEventType.DOCK_REQUESTED,
+                description=f"Requested dock for ETA: {shipment.expected_arrival_time}",
+                performed_by=request.user,
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Dock reservation requested successfully.',
+                'data': ShipmentSerializer(shipment).data,
+            })
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        tags=['Dock Reservations'],
+        summary='Approve a dock request',
+        request=ApproveDockSerializer,
+    )
+    @action(detail=True, methods=['post'], url_path='approve-dock')
+    def approve_dock(self, request, pk=None):
+        shipment = self.get_object()
+        serializer = ApproveDockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus, ShipmentEventType
+            from operations.models import ShipmentEvent, DockReservation
+            from warehouses.models import DockBay
+            
+            dock = DockBay.objects.get(id=serializer.validated_data['dock_id'])
+            
+            transition_shipment(shipment, ShipmentStatus.DOCK_APPROVED)
+            
+            DockReservation.objects.create(
+                shipment=shipment,
+                dock=dock,
+                reserved_by=request.user,
+            )
+            
+            ShipmentEvent.objects.create(
+                shipment=shipment,
+                event_type=ShipmentEventType.DOCK_RESERVED,
+                description=f"Dock reservation approved and assigned to {dock.dock_number}",
+                performed_by=request.user,
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Dock request approved successfully.',
+                'data': ShipmentSerializer(shipment).data,
+            })
+        except DockBay.DoesNotExist:
+            return Response({'success': False, 'message': 'Dock not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        tags=['Dock Reservations'],
+        summary='Reject a dock request',
+    )
+    @action(detail=True, methods=['post'], url_path='reject-dock')
+    def reject_dock(self, request, pk=None):
+        shipment = self.get_object()
+        
+        try:
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus, ShipmentEventType
+            from operations.models import ShipmentEvent
+            
+            transition_shipment(shipment, ShipmentStatus.READY_FOR_TRANSIT)
+            shipment.expected_arrival_time = None
+            shipment.save()
+            
+            ShipmentEvent.objects.create(
+                shipment=shipment,
+                event_type=ShipmentEventType.DOCK_REQUEST_REJECTED,
+                description="Dock reservation request rejected.",
+                performed_by=request.user,
+            )
+            
+            return Response({
+                'success': True,
+                'message': 'Dock request rejected.',
+                'data': ShipmentSerializer(shipment).data,
+            })
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     @extend_schema(tags=['Shipment Operations'], summary='Complete a shipment')
     @action(detail=True, methods=['post'], url_path='complete')
     def complete_action(self, request, pk=None):
         shipment = self.get_object()
 
         try:
+            from operations.services.state_machine import transition_shipment
+            from common.enums import ShipmentStatus
+            
+            if shipment.status == ShipmentStatus.IN_TRANSIT:
+                transition_shipment(shipment, ShipmentStatus.APPROACHING_DESTINATION)
+            if shipment.status == ShipmentStatus.APPROACHING_DESTINATION:
+                transition_shipment(shipment, ShipmentStatus.ARRIVED_AT_GATE)
+            if shipment.status == ShipmentStatus.ARRIVED_AT_GATE:
+                transition_shipment(shipment, ShipmentStatus.RECEIVING_IN_PROGRESS)
+            if shipment.status == ShipmentStatus.RECEIVING_IN_PROGRESS:
+                transition_shipment(shipment, ShipmentStatus.SLOTTING_IN_PROGRESS)
+
             complete_shipment(shipment, request.user, ip_address=get_client_ip(request))
         except (ArrivalError, InvalidTransitionError) as e:
             return Response(
@@ -546,13 +696,100 @@ class LotViewSet(viewsets.ModelViewSet):
         if user.role == UserRole.SUPER_ADMIN:
             return qs.all()
         if user.role == UserRole.FACTORY_MANAGER:
-            return qs.filter(factory__organization=user.organization)
+            if user.organization:
+                return qs.filter(Q(factory__organization=user.organization) | Q(created_by=user)).distinct()
+            return qs.filter(created_by=user)
+        if user.role == UserRole.WAREHOUSE_MANAGER:
+            if user.organization:
+                return qs.filter(destination_warehouse__organization=user.organization)
+            return qs.none()
         if user.role == UserRole.ADMIN:
             return qs.exclude(status='ACCEPTED')
         return qs.none()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        from common.enums import LotStatus
+        serializer.save(created_by=self.request.user, status=LotStatus.PENDING_WAREHOUSE_APPROVAL)
+
+    @extend_schema(tags=['Lots'], summary='Approve warehouse request and slot parcels')
+    @action(detail=True, methods=['post'], url_path='approve-warehouse')
+    def approve_warehouse(self, request, pk=None):
+        from common.enums import LotStatus, ParcelStatus
+        from warehouses.services.slotting import recommend_shelf, assign_parcel
+        from warehouses.models import Shelf, Parcel
+        import traceback
+
+        lot = self.get_object()
+        
+        if lot.status != LotStatus.PENDING_WAREHOUSE_APPROVAL:
+            return Response(
+                {'success': False, 'message': f"Cannot approve lot in status {lot.status}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        lot.status = LotStatus.WAREHOUSE_APPROVED
+        lot.save(update_fields=['status', 'updated_at'])
+        
+        try:
+            for lot_parcel in lot.parcels.all():
+                for _ in range(lot_parcel.quantity):
+                    parcel_data = {
+                        'height': lot_parcel.height,
+                        'width': lot_parcel.width,
+                        'depth': lot_parcel.length,
+                        'weight': lot_parcel.weight,
+                        'expected_dispatch_date': lot.expected_dispatch_date,
+                    }
+                    
+                    recommendations = recommend_shelf(parcel_data, lot.destination_warehouse)
+                    if not recommendations:
+                        continue 
+                        
+                    best_shelf_id = recommendations[0]['shelf_id']
+                    shelf = Shelf.objects.get(id=best_shelf_id)
+                    
+                    parcel = Parcel.objects.create(
+                        parcel_id=f"{lot.id}-{lot_parcel.id}-{_}",
+                        warehouse=lot.destination_warehouse,
+                        weight=lot_parcel.weight,
+                        height=lot_parcel.height,
+                        width=lot_parcel.width,
+                        depth=lot_parcel.length,
+                        status=ParcelStatus.PENDING,
+                        destination=lot.destination_warehouse.name,
+                    )
+                    assign_parcel(parcel, shelf)
+        except Exception as e:
+            traceback.print_exc()
+            return Response({'success': False, 'message': f"Failed to slot parcels: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'success': True,
+            'message': 'Warehouse request approved and parcels slotted.',
+            'data': LotSerializer(lot).data,
+        })
+
+    @extend_schema(tags=['Lots'], summary='Reject warehouse request for a lot')
+    @action(detail=True, methods=['post'], url_path='reject-warehouse')
+    def reject_warehouse(self, request, pk=None):
+        from common.enums import LotStatus
+
+        lot = self.get_object()
+
+        if lot.status != LotStatus.PENDING_WAREHOUSE_APPROVAL:
+            return Response(
+                {'success': False, 'message': f"Cannot reject lot in status {lot.status}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        lot.status = LotStatus.WAREHOUSE_REJECTED
+        lot.save(update_fields=['status', 'updated_at'])
+
+        return Response({
+            'success': True,
+            'message': 'Warehouse request rejected.',
+            'data': LotSerializer(lot).data,
+        })
 
     @action(detail=True, methods=['post'], url_path='submit-quote')
     def submit_quote(self, request, pk=None):

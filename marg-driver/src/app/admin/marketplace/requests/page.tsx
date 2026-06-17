@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Package, MapPin, Calendar, Weight, ArrowRight, FileText, X as XIcon, Send, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
 export default function MarketplaceRequestsPage() {
@@ -10,6 +11,7 @@ export default function MarketplaceRequestsPage() {
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [quoteForm, setQuoteForm] = useState({ price: "", transit_time: "", conditions: "" });
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => { loadRequests(); }, []);
 
@@ -99,6 +101,12 @@ export default function MarketplaceRequestsPage() {
                   className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-orange text-white rounded-xl text-sm font-medium hover:bg-brand-orange/90 transition-colors"
                 >
                   <FileText size={14} /> Submit Quote
+                </button>
+                <button
+                  onClick={() => router.push(`/admin/marketplace/requests/${s.id}/workflow`)}
+                  className="px-4 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Eye size={14} /> Workflow
                 </button>
                 <button 
                   onClick={() => handleIgnore(s.id)}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { dashboardApi } from '@/api/endpoints';
 import { Speed, CheckCircle, Timer, TrendingUp } from '@mui/icons-material';
 
@@ -23,8 +23,8 @@ export default function AnalyticsPage() {
     { label: 'Dock Utilization', value: `${transit.docks?.utilization_pct ?? 0}%`, icon: <Timer />, color: '#8B5CF6', bg: '#F5F3FF' },
   ];
 
-  // Shipment volume chart (empty until historical data API is added)
-  const volumeData: any[] = [];
+  // Shipment volume trend
+  const trendData: any[] = [];
 
   // Status pie
   const statusData = transit.shipments ? [
@@ -66,21 +66,21 @@ export default function AnalyticsPage() {
             <CardContent>
               <Typography variant="subtitle1" sx={{ mb: 2 }}>Shipment Volume</Typography>
               <Box sx={{ height: 300 }}>
-                {volumeData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={volumeData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="shipments" fill="#F97316" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <Typography variant="body2" sx={{ color: '#9CA3AF' }}>No historical volume data</Typography>
-                  </Box>
-                )}
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendData}>
+                    <defs>
+                      <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#EA580C" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#EA580C" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#8A7F75', fontSize: 12 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8A7F75', fontSize: 12 }} dx={-10} />
+                    <ReTooltip cursor={{ fill: 'rgba(234, 88, 12, 0.05)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(214, 204, 194, 0.4)' }} />
+                    <Area type="monotone" dataKey="shipments" stroke="#EA580C" strokeWidth={3} fill="url(#orangeGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </Box>
             </CardContent>
           </Card>
@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
                       <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
                         {statusData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip />
+                      <ReTooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (

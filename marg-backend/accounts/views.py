@@ -427,7 +427,7 @@ class FactoryRegistrationView(APIView):
             first_name=first_name,
             last_name=last_name,
             phone_number=phone,
-            role=UserRole.SUPER_ADMIN,
+            role=UserRole.FACTORY_MANAGER,
             organization=org
         )
 
@@ -605,7 +605,7 @@ class LogisticsRegistrationView(APIView):
             email=email,
             phone_number=data['phone_number'],
             address=data.get('company_address', ''),
-            gst_number=data.get('gst_number', ''),
+            gst_number=data.get('gst_number') or None,
             org_type=OrganizationType.LOGISTICS_PROVIDER,
             metadata={
                 "registration_number": data.get('registration_number'),
